@@ -96,6 +96,13 @@ def extract_and_parse_json(text):
     else:
         print("No JSON content found between triple backticks")
         return None
+    
+# Placeholder
+def calculate_new_position(nodes: List[Dict]) -> Dict[str, int]:
+    # Calculate the average position of all nodes
+    avg_x = sum(node['position']['x'] for node in nodes) / len(nodes)
+    avg_y = sum(node['position']['y'] for node in nodes) / len(nodes)
+    return {'x': round(avg_x), 'y': round(avg_y) + 100}  # Place it slightly below the average
 
 def synthesize_idea(nodes: List[Dict]) -> Dict:
     # Combine all titles and contents
@@ -135,12 +142,11 @@ def synthesize_idea(nodes: List[Dict]) -> Dict:
     
     return new_node
 
-# Placeholder
-def calculate_new_position(nodes: List[Dict]) -> Dict[str, int]:
-    # Calculate the average position of all nodes
-    avg_x = sum(node['position']['x'] for node in nodes) / len(nodes)
-    avg_y = sum(node['position']['y'] for node in nodes) / len(nodes)
-    return {'x': round(avg_x), 'y': round(avg_y) + 100}  # Place it slightly below the average
+@app.route('/synthesize', methods=['POST'])
+def synthesize():
+    nodes = request.json['nodes']
+    new_node = synthesize_idea(nodes)
+    return jsonify(new_node)
 
 if __name__ == '__main__':
     app.run(debug=True)
