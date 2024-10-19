@@ -5,7 +5,7 @@ import tempfile
 import os
 import json
 
-client = OpenAI()
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
 def transcribe_audio(audio_file_path):
   audio_file= open("audio_file_path", "rb")

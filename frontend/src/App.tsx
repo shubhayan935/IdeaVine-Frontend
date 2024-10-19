@@ -21,7 +21,7 @@ import 'reactflow/dist/style.css';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Mic, StopCircle, Plus, Trash2, Check } from 'lucide-react';
+import { Mic, StopCircle, Plus, Trash2, Check, Lightbulb } from 'lucide-react';
 
 interface CustomNodeData {
   title: string;
@@ -207,8 +207,8 @@ function MindMapContent() {
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNodeData>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const { project } = useReactFlow();
+  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
 
-  // State and refs for audio recording
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -232,17 +232,6 @@ function MindMapContent() {
   
       mediaRecorderRef.current.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-  
-        // Create a download link for the audio blob
-        const audioURL = window.URL.createObjectURL(audioBlob);
-        const link = document.createElement('a');
-        link.href = audioURL;
-        link.download = 'recording.webm';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-  
-        // Proceed with uploading the audio to the backend
         await handleAudioUpload(audioBlob);
       };
   
@@ -270,12 +259,10 @@ function MindMapContent() {
 
   const processBackendNodes = (backendNodes: any[]) => {
     const newNodes: Node<CustomNodeData>[] = [];
-    const newEdgesMap = new Map<string, Edge>(); // Use a map to prevent duplicate edges
+    const newEdgesMap = new Map<string, Edge>();
     const nodeMap = new Map<string, Node<CustomNodeData>>();
   
-    // First pass: create nodes and store them in a map
     backendNodes.forEach((node) => {
-      // Parse parents and children fields
       const parents = node.parents
         ? node.parents
             .split(',')
@@ -289,7 +276,6 @@ function MindMapContent() {
             .filter((id: string) => id.length > 0)
         : [];
   
-      // Create React Flow node
       const reactFlowNode: Node<CustomNodeData> = {
         id: node.id,
         type: 'customNode',
@@ -299,17 +285,15 @@ function MindMapContent() {
           parents,
           children,
         },
-        position: { x: 0, y: 0 }, // Position will be updated later
+        position: { x: 0, y: 0 },
       };
       newNodes.push(reactFlowNode);
       nodeMap.set(node.id, reactFlowNode);
     });
   
-    // Second pass: create edges based on parents and children relationships
     newNodes.forEach((node) => {
       const { id, data } = node;
       data.parents.forEach((parentId) => {
-        // Create edge from parent to node
         const edgeId = `e${parentId}-${id}`;
         if (!newEdgesMap.has(edgeId)) {
           newEdgesMap.set(edgeId, {
@@ -321,7 +305,6 @@ function MindMapContent() {
       });
   
       data.children.forEach((childId) => {
-        // Create edge from node to child
         const edgeId = `e${id}-${childId}`;
         if (!newEdgesMap.has(edgeId)) {
           newEdgesMap.set(edgeId, {
@@ -333,10 +316,8 @@ function MindMapContent() {
       });
     });
   
-    // Position nodes relative to their parents (simple layout algorithm)
     const positionedNodes = positionNodes(newNodes, nodeMap);
   
-    // Convert edges map to array
     const newEdges = Array.from(newEdgesMap.values());
   
     return { newNodes: positionedNodes, newEdges };
@@ -356,8 +337,8 @@ function MindMapContent() {
       const node = nodeMap.get(nodeId);
       if (node) {
         node.position = {
-          x: depth * 200, // Adjust horizontal spacing as needed
-          y: index * 100, // Adjust vertical spacing as needed
+          x: depth * 200,
+          y: index * 100,
         };
         positionedNodes.push(node);
   
@@ -369,14 +350,12 @@ function MindMapContent() {
       }
     };
   
-    // Start positioning from root nodes (nodes without parents)
     nodes.forEach((node) => {
       if (node.data.parents.length === 0) {
         positionNode(node.id, 0, positionedNodes.length);
       }
     });
   
-    // Position any disconnected nodes
     nodes.forEach((node) => {
       if (!visited.has(node.id)) {
         positionNode(node.id, 0, positionedNodes.length);
@@ -386,8 +365,6 @@ function MindMapContent() {
     return positionedNodes;
   };
   
-  
-
   const handleAudioUpload = async (audioBlob: Blob) => {
     const formData = new FormData();
     formData.append('audio_file', audioBlob, 'recording.webm');
@@ -407,10 +384,8 @@ function MindMapContent() {
       const nodesFromBackend = data.nodes;
       console.log(nodesFromBackend);
 
-      // Convert nodes to React Flow format
       const { newNodes, newEdges } = processBackendNodes(nodesFromBackend);
 
-      // Update nodes and edges
       setNodes((nds) => [...nds, ...newNodes]);
       setEdges((eds) => [...eds, ...newEdges]);
     } catch (err) {
@@ -433,7 +408,7 @@ function MindMapContent() {
             if (node.id === params.target && !node.data.parents.includes(params.source as string)) {
               return {
                 ...node,
-                data: { ...node.data, parents: [...node.data.parents, params.source as string] },
+                data: { ...node.data, parents:  [...node.data.parents, params.source as string] },
               };
             }
             return node;
@@ -443,7 +418,92 @@ function MindMapContent() {
     },
     [setEdges, setNodes]
   );
-  
+
+  const onSelectionChange = useCallback((elements: { nodes: Node[]; edges: Edge[] }) => {
+    
+    setSelectedNodes(elements.nodes.map((node) => node.id));
+  }, []);
+
+  const handleSuggest = useCallback(async () => {
+    if (selectedNodes.length === 0) {
+      console.log('No nodes selected for suggestion');
+      return;
+    }
+
+    const selectedNodesData = nodes
+      .filter((node) => selectedNodes.includes(node.id))
+      .map((node) => ({
+        id: node.id,
+        title: node.data.title,
+        content: node.data.content,
+      }));
+
+    try {
+      const response = await fetch('http://127.0.0.1:5000/synthesize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ nodes: selectedNodesData }),
+      });
+
+      if (!response.ok) {
+        console.error('Failed to get suggestion');
+        return;
+      }
+
+      const data = await response.json();
+      const suggestedNode = data;
+
+      console.log(suggestedNode);
+
+      // Update the id and position of the suggested node
+      const newNodeId = `suggested-${Date.now()}`;
+      const newPosition = { x: Math.random() * 500, y: Math.random() * 500 };
+
+      const newNode: Node<CustomNodeData> = {
+        id: newNodeId,
+        type: 'customNode',
+        data: {
+          title: suggestedNode.title,
+          content: suggestedNode.content,
+          parents: selectedNodes,
+          children: [],
+        },
+        position: newPosition,
+      };
+
+      // Add the new node and update parent nodes
+      setNodes((nds) => [
+        ...nds.map((node) => {
+          if (selectedNodes.includes(node.id)) {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                children: [...node.data.children, newNodeId],
+              },
+            };
+          }
+          return node;
+        }),
+        newNode,
+      ]);
+
+      // Add new edges
+      setEdges((eds) => [
+        ...eds,
+        ...selectedNodes.map((parentId) => ({
+          id: `e${parentId}-${newNodeId}`,
+          source: parentId,
+          target: newNodeId,
+        })),
+      ]);
+
+    } catch (err) {
+      console.error('Error getting suggestion:', err);
+    }
+  }, [selectedNodes, nodes, setNodes, setEdges]);
 
   return (
     <div style={{ width: '100%', height: '100vh' }}>
@@ -453,6 +513,7 @@ function MindMapContent() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onSelectionChange={onSelectionChange}
         nodeTypes={nodeTypes}
         proOptions={{ hideAttribution: true }}
       >
@@ -460,7 +521,7 @@ function MindMapContent() {
         <Background />
         <MiniMap position="top-right"/>
       </ReactFlow>
-      <div className="absolute bottom-4 right-4 z-10">
+      <div className="absolute bottom-4 right-4 z-10 flex gap-2">
         <Button onClick={handleRecording}>
           {isRecording ? (
             <StopCircle className="mr-2 h-4 w-4" />
@@ -468,6 +529,10 @@ function MindMapContent() {
             <Mic className="mr-2 h-4 w-4" />
           )}
           {isRecording ? "Stop Recording" : "Start Recording"}
+        </Button>
+        <Button onClick={handleSuggest} disabled={selectedNodes.length === 0}>
+          <Lightbulb className="mr-2 h-4 w-4" />
+          Suggest
         </Button>
       </div>
     </div>
