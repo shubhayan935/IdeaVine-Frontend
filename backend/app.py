@@ -8,6 +8,7 @@ import json
 app = Flask(__name__)
 cors = CORS(app)
 
+os.environ['OPENAI_API_KEY'] = "sk-proj-RmmuI2WsruF2tXW4cdkzT3BlbkFJgbGOd2gIwBd6fDn5bk4p"
 client = OpenAI()
 
 def transcribe_audio(audio_file_path):

@@ -458,7 +458,7 @@ function MindMapContent() {
       >
         <Controls />
         <Background />
-        {/* <MiniMap /> */}
+        <MiniMap position="top-right"/>
       </ReactFlow>
       <div className="absolute bottom-4 right-4 z-10">
         <Button onClick={handleRecording}>
