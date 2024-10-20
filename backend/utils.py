@@ -6,27 +6,26 @@ from openai import OpenAI
 import google.generativeai as genai
 import vertexai
 from vertexai.generative_models import GenerativeModel
-# from dotenv import load_dotenv
+from dotenv import load_dotenv
 
-# load_dotenv()
+load_dotenv()
 
 # Initialize clients
-# genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
-# os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key.json"
 vertexai.init(project="cellular-ring-439022-r0", location="us-central1")
 
-# model = GenerativeModel("gemini-1.5-flash-002")
+model = GenerativeModel("gemini-1.5-flash-002")
 
-# def send_to_gemini(prompt: str) -> str:
-#     # Send prompt to Gemini and get response
-#     response = model.generate_content(prompt)
-#     answer = response.candidates[0].content.parts[0].text
-#     print(answer)
-#     gemini_response_text = extract_and_parse_json(answer)
-#     print(gemini_response_text)
-#     return gemini_response_text
+def send_to_gemini(prompt: str) -> str:
+    # Send prompt to Gemini and get response
+    response = model.generate_content(prompt)
+    answer = response.candidates[0].content.parts[0].text
+    gemini_response_text = extract_and_parse_json(answer)
+    print(f'GEMINI RESPONSE IN SEND TO GEMINI {gemini_response_text}')
+    return gemini_response_text
 
 def transcribe_audio(audio_file_path):
     with open(audio_file_path, "rb") as audio_file:
@@ -57,10 +56,8 @@ def generate_nodes_from_transcription(transcription):
 
     Begin:
     """
-    print('HERE')
-    response = extract_and_parse_json(send_to_gemini(prompt))
-    print(f'RESPONSE: {response}')
-    return response
+    answer = send_to_gemini(prompt)
+    return answer
 
 def extract_and_parse_json(text):
     match = re.search(r'```(?:json)?\s*([\s\S]*?)\s*```', text)
@@ -91,6 +88,8 @@ def synthesize_idea(nodes: List[Dict]) -> Dict:
     prompt = f"""
     You are an assistant that generates one new idea or thought from the given idea. Limit content to 20 words.\n\n
 
+    Input: {combined_text}
+
     Output format:
     {{
         "title": "Node Title",
@@ -99,17 +98,8 @@ def synthesize_idea(nodes: List[Dict]) -> Dict:
 
     Begin:
     """
-
-    completion = client.chat.completions.create(
-    model="gpt-4o-mini",
-    messages=[
-    {"role": "system", "content": prompt},
-    {"role": "user", "content": combined_text}
-    ],
-    temperature=0.0,
-    )
     
-    gemini_response_text = json.loads(completion.choices[0].message.content)
+    gemini_response_text = send_to_gemini(prompt)
     
     new_node = {
         'id': '-1',
