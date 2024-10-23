@@ -17,6 +17,7 @@ def transcribe_audio(audio_file_path):
   return transcription.text
 
 def generate_nodes_from_transcription(transcription):
+  
   prompt = f"""
   You are an assistant that converts spoken thoughts into a structured mind map. Given the input transcription, extract key ideas and organize them hierarchically as a list of nodes suitable for a mind map.
 

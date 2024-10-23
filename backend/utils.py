@@ -12,7 +12,7 @@ from vertexai.generative_models import GenerativeModel
 
 # Initialize clients
 # genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+client = OpenAI()
 
 # os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key.json"
 vertexai.init(project="cellular-ring-439022-r0", location="us-central1")

@@ -2,10 +2,9 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import tempfile
 import os
+from utils import transcribe_audio, generate_nodes_from_transcription, synthesize_idea
 from openai import OpenAI
 import json
-from utils import transcribe_audio, generate_nodes_from_transcription, synthesize_idea
-# from dotenv import load_dotenv
 
 # load_dotenv()
 
@@ -83,7 +82,6 @@ def process_audio():
 def synthesize():
     nodes = request.json['nodes']
     new_node = synthesize_idea(nodes)
-    print('new_node\n', new_node)
     return jsonify(new_node)
 
 if __name__ == '__main__':

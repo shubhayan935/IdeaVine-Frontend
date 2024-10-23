@@ -1,3 +1,6 @@
 # Python virtual environments
 .env
 venv/
+.DS_Store
+backend/.DS_Store
+backend/__pycache__/utils.cpython-39.pyc
