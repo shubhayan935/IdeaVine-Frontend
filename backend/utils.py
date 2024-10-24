@@ -3,9 +3,6 @@ import json
 import re
 from typing import List, Dict
 from openai import OpenAI
-import google.generativeai as genai
-import vertexai
-from vertexai.generative_models import GenerativeModel
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,24 +10,24 @@ load_dotenv()
 # Initialize clients
 <<<<<<< HEAD
 # genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-client = OpenAI()
-=======
-genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 >>>>>>> refs/remotes/origin/main
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key.json"
-vertexai.init(project="cellular-ring-439022-r0", location="us-central1")
-
-model = GenerativeModel("gemini-1.5-flash-002")
-
-def send_to_gemini(prompt: str) -> str:
-    # Send prompt to Gemini and get response
-    response = model.generate_content(prompt)
-    answer = response.candidates[0].content.parts[0].text
-    gemini_response_text = extract_and_parse_json(answer)
-    print(f'GEMINI RESPONSE IN SEND TO GEMINI {gemini_response_text}')
-    return gemini_response_text
+def send_to_openai(prompt: str) -> str:
+    # Send prompt to OpenAI and get response
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You are an assistant that helps create structured mind maps and synthesize ideas."},
+            {"role": "user", "content": prompt}
+        ],
+        temperature=0.7,
+    )
+    
+    answer = response.choices[0].message.content
+    parsed_response = extract_and_parse_json(answer)
+    print(f'OPENAI RESPONSE: {parsed_response}')
+    return parsed_response
 
 def transcribe_audio(audio_file_path):
     with open(audio_file_path, "rb") as audio_file:
@@ -43,25 +40,23 @@ def transcribe_audio(audio_file_path):
 
 def generate_nodes_from_transcription(transcription):
     prompt = f"""
-    You are an assistant that converts spoken thoughts into a structured mind map. Given the input transcription, extract key ideas and organize them hierarchically as a list of nodes suitable for a mind map.
+    Convert the following transcription into a structured mind map. Extract key ideas and organize them hierarchically as a list of nodes.
 
     Input: {transcription}
 
-    Output format:
-    [
-        {{
-            "id": "unique_node_id",
-            "parents": "parent_node_ids_or_null",
-            "children": "children_node_ids_or_null",
-            "title": "Node Title",
-            "content": "Content"
-        }},
-        ...
-    ]
+    Output the result as a JSON array of nodes. Each node should have this structure:
+    {{
+        "id": "unique_node_id",
+        "parents": "parent_node_ids_or_null" (string),
+        "children": "children_node_ids_or_null" (string),
+        "title": "Node Title",
+        "content": "Content"
+    }}
 
-    Begin:
+    Ensure the output is properly formatted JSON enclosed in triple backticks.
     """
-    answer = send_to_gemini(prompt)
+    answer = send_to_openai(prompt)
+    print(f'ANSWER HERE: {answer}')
     return answer
 
 def extract_and_parse_json(text):
@@ -75,8 +70,12 @@ def extract_and_parse_json(text):
             print(f"Error parsing JSON: {e}")
             return None
     else:
-        print("No JSON content found between triple backticks")
-        return None
+        # If no triple backticks found, try to parse the entire text as JSON
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError as e:
+            print(f"Error parsing JSON: {e}")
+            return None
 
 def calculate_new_position(nodes: List[Dict]) -> Dict[str, int]:
     avg_x = sum(node['position']['x'] for node in nodes) / len(nodes)
@@ -91,25 +90,25 @@ def synthesize_idea(nodes: List[Dict]) -> Dict:
     combined_text = " ".join(all_titles + all_contents)
     
     prompt = f"""
-    You are an assistant that generates one new idea or thought from the given idea. Limit content to 20 words.\n\n
+    Generate one new idea or thought based on the following input. Limit the content to 20 words.
 
     Input: {combined_text}
 
-    Output format:
+    Output a single JSON object with this structure:
     {{
         "title": "Node Title",
         "content": "Content"
     }}
 
-    Begin:
+    Ensure the output is properly formatted JSON enclosed in triple backticks.
     """
     
-    gemini_response_text = send_to_gemini(prompt)
+    openai_response = send_to_openai(prompt)
     
     new_node = {
         'id': '-1',
-        'title': gemini_response_text['title'],
-        'content': gemini_response_text['content'],
+        'title': openai_response['title'],
+        'content': openai_response['content'],
         'parents': [node['id'] for node in nodes],
         'children': []
     }

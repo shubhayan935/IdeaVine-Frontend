@@ -4,7 +4,7 @@ import tempfile
 import os
 from openai import OpenAI
 import json
-from utils import transcribe_audio, generate_nodes_from_transcription, synthesize_idea, extract_and_parse_json, send_to_gemini
+from utils import transcribe_audio, generate_nodes_from_transcription, synthesize_idea, send_to_openai, extract_and_parse_json
 from dotenv import load_dotenv
 
 load_dotenv()
