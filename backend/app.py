@@ -9,8 +9,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-#Hi
-
 app = Flask(__name__)
 cors = CORS(app)
 
@@ -43,6 +41,43 @@ def synthesize():
     nodes = request.json['nodes']
     new_node = synthesize_idea(nodes)
     return jsonify(new_node)
+
+@app.route('/write', methods=['POST'])
+def write():
+    nodes = request.json['nodes']
+    
+    all_titles = [node['title'] for node in nodes]
+    all_contents = [node['content'] for node in nodes]
+    combined_text = " ".join(all_titles + all_contents)
+    
+    prompt = f"""
+    Write a structured essay on the following ideas and concepts, connecting similar ones.
+    Include:
+    1. An introduction paragraph
+    2. 2-3 body paragraphs connecting the main ideas
+    3. A conclusion paragraph
+    
+    Make logical connections between these concepts:
+    {combined_text}
+
+    Output format:
+    {{
+        "title": "An overarching title for the analysis",
+        "introduction": "Introduction paragraph",
+        "body": "Main body paragraphs",
+        "conclusion": "Concluding paragraph"
+    }}
+
+    Ensure the output is properly formatted JSON enclosed in triple backticks.
+    """
+    
+    response = send_to_openai(prompt)
+    
+    if response:
+        return jsonify(response)
+    else:
+        return jsonify({'error': 'Failed to generate writing'}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)
