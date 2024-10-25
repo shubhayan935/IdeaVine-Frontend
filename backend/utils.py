@@ -7,11 +7,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Initialize clients
-<<<<<<< HEAD
-# genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+# Initialize client
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
->>>>>>> refs/remotes/origin/main
 
 def send_to_openai(prompt: str) -> str:
     # Send prompt to OpenAI and get response
