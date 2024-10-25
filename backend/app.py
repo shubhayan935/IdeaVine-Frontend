@@ -63,9 +63,7 @@ def write():
     Output format:
     {{
         "title": "An overarching title for the analysis",
-        "introduction": "Introduction paragraph",
-        "body": "Main body paragraphs",
-        "conclusion": "Concluding paragraph"
+        "content": "Content of the essay",
     }}
 
     Ensure the output is properly formatted JSON enclosed in triple backticks.
