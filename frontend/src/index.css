@@ -68,6 +68,16 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+.dark .react-flow__node {
+  background-color: white;
+  color: black;
+}
+
+.dark .react-flow__node-custom {
+  background-color: white;
+  color: black;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
