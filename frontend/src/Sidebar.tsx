@@ -294,7 +294,7 @@ export function AppSidebar() {
                         <a
                           href={`#${item.id}`}
                           className={cn(
-                            "group relative flex flex-col gap-2 rounded-lg px-3 py-3 text-sm transition-all hover:shadow",
+                            "group relative flex flex-col gap-2 rounded-lg text-sm transition-all hover:shadow",
                             activeItem === item.id
                               ? "bg-primary text-primary-foreground shadow-sm"
                               : "text-muted-foreground hover:bg-muted"
