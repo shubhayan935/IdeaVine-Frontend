@@ -97,6 +97,9 @@ function LandingPageContent() {
   const navigate = useNavigate()
   const { theme } = useTheme()
 
+  const [nodes, setNodes] = useState(initialNodes)
+  const [edges, setEdges] = useState(initialEdges)
+
   const validateEmail = (email: string) => {
     const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
     return re.test(String(email).toLowerCase())
@@ -125,9 +128,6 @@ function LandingPageContent() {
     }
   }, [controls, inView])
 
-  const [nodes, setNodes] = useState(initialNodes)
-  const [edges, setEdges] = useState(initialEdges)
-
   const onNodeDragStop = useCallback(
     (event: React.MouseEvent<Element, MouseEvent>, node: Node) => {
       const updatedNodes = nodes.map((n) => {
@@ -143,8 +143,25 @@ function LandingPageContent() {
 
   return (
     <div className={`min-h-screen bg-background text-foreground transition-colors duration-300 ${theme === 'dark' ? 'dark' : ''}`}>
+      {/* Add the dotted background to the entire page */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        <ReactFlow
+          nodes={[]}
+          edges={[]}
+          nodeTypes={{}}
+          edgeTypes={{}}
+          proOptions={{ hideAttribution: true }}
+        >
+          <Background
+            color={theme === 'dark' ? '#555' : '#999'}
+            gap={16}
+            size={1}
+          />
+        </ReactFlow>
+      </div>
+
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-sm">
+      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
@@ -153,15 +170,15 @@ function LandingPageContent() {
             </div>
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
-              <ScrollLink
-                to="features"
-                smooth={true}
-                duration={500}
-                className="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium cursor-pointer"
-              >
-                Features
-              </ScrollLink>
-              <ScrollLink
+                <ScrollLink
+                  to="features"
+                  smooth={true}
+                  duration={500}
+                  className="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium cursor-pointer"
+                >
+                  Features
+                </ScrollLink>
+                <ScrollLink
                   to="demo"
                   smooth={true}
                   duration={500}
@@ -235,7 +252,6 @@ function LandingPageContent() {
               fitView
               attributionPosition="bottom-left"
             >
-              <Background color="#888" gap={16} />
               <Controls />
             </ReactFlow>
           </div>
@@ -243,148 +259,154 @@ function LandingPageContent() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-16 sm:py-24">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Powerful Features to Boost Your Creativity</h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              IdeaVine combines cutting-edge technology with intuitive design to help you brainstorm and organize your thoughts effectively.
-            </p>
+      <Element name="features">
+        <section className="py-16 sm:py-24">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Powerful Features to Boost Your Creativity</h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                IdeaVine combines cutting-edge technology with intuitive design to help you brainstorm and organize your thoughts effectively.
+              </p>
+            </div>
+            <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+              {features.map((feature, index) => (
+                <motion.div
+                  key={index}
+                  className="rounded-lg bg-card p-6 shadow-sm"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary">
+                    <feature.icon className="h-6 w-6 text-primary-foreground" />
+                  </div>
+                  <h3 className="mt-4 text-lg font-semibold">{feature.title}</h3>
+                  <p className="mt-2 text-muted-foreground">{feature.description}</p>
+                </motion.div>
+              ))}
+            </div>
           </div>
-          <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                className="rounded-lg bg-card p-6 shadow-sm"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary">
-                  <feature.icon className="h-6 w-6 text-primary-foreground" />
-                </div>
-                <h3 className="mt-4 text-lg font-semibold">{feature.title}</h3>
-                <p className="mt-2 text-muted-foreground">{feature.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      </Element>
 
       {/* Demo Section */}
-      <section id="demo" className="py-16 sm:py-24 bg-muted/50">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center mb-12">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">See IdeaVine in Action</h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Experience the power and simplicity of IdeaVine with our interactive demo videos.
-            </p>
+      <Element name="demo">
+        <section className="py-16 sm:py-24 bg-muted/50">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-2xl text-center mb-12">
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">See IdeaVine in Action</h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                Experience the power and simplicity of IdeaVine with our interactive demo videos.
+              </p>
+            </div>
+            <Tabs defaultValue="mindmap" className="w-full" onValueChange={setActiveTab}>
+              <TabsList className="grid w-full grid-cols-3 mb-8 bg-secondary">
+                <TabsTrigger value="mindmap" className="bg-secondary">Mind Mapping</TabsTrigger>
+                <TabsTrigger value="suggestions" className="bg-secondary">AI Suggestions</TabsTrigger>
+                <TabsTrigger value="voice" className="bg-secondary">Voice Recording</TabsTrigger>
+              </TabsList>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3  }}
+                >
+                  <TabsContent value="mindmap" className="bg-card rounded-lg shadow-lg p-6">
+                    <h3 className="text-xl font-semibold mb-4">Create Your Mind Map</h3>
+                    <p className="mb-4">Watch how easy it is to create and organize your ideas with IdeaVine's intuitive interface.</p>
+                    <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                      <p className="text-muted-foreground">Mind Mapping Demo Video</p>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="suggestions" className="bg-card rounded-lg shadow-lg p-6">
+                    <h3 className="text-xl font-semibold mb-4">AI-Powered Suggestions</h3>
+                    <p className="mb-4">See how our AI analyzes your mind map and provides relevant suggestions to expand your ideas.</p>
+                    <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                      <p className="text-muted-foreground">AI Suggestions Demo Video</p>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="voice" className="bg-card rounded-lg shadow-lg p-6">
+                    <h3 className="text-xl font-semibold mb-4">Voice Recording</h3>
+                    <p className="mb-4">Learn how to capture your ideas on the go with our voice recording feature.</p>
+                    <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
+                      <p className="text-muted-foreground">Voice Recording Demo Video</p>
+                    </div>
+                  </TabsContent>
+                </motion.div>
+              </AnimatePresence>
+            </Tabs>
           </div>
-          <Tabs defaultValue="mindmap" className="w-full" onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3 mb-8">
-              <TabsTrigger value="mindmap">Mind Mapping</TabsTrigger>
-              <TabsTrigger value="suggestions">AI Suggestions</TabsTrigger>
-              <TabsTrigger value="voice">Voice Recording</TabsTrigger>
-            </TabsList>
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-              >
-                <TabsContent value="mindmap" className="bg-card rounded-lg shadow-lg p-6">
-                  <h3 className="text-xl font-semibold mb-4">Create Your Mind Map</h3>
-                  <p className="mb-4">Watch how easy it is to create and organize your ideas with IdeaVine's intuitive interface.</p>
-                  <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                    <p className="text-muted-foreground">Mind Mapping Demo Video</p>
-                  </div>
-                </TabsContent>
-                <TabsContent value="suggestions" className="bg-card rounded-lg shadow-lg p-6">
-                  <h3 className="text-xl font-semibold mb-4">AI-Powered Suggestions</h3>
-                  <p className="mb-4">See how our AI analyzes your mind map and provides relevant suggestions to expand your ideas.</p>
-                  <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                    <p className="text-muted-foreground">AI Suggestions Demo Video</p>
-                  </div>
-                </TabsContent>
-                <TabsContent value="voice" className="bg-card rounded-lg shadow-lg p-6">
-                  <h3 className="text-xl font-semibold mb-4">Voice Recording</h3>
-                  <p className="mb-4">Learn how to capture your ideas on the go with our voice recording feature.</p>
-                  <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                    <p className="text-muted-foreground">Voice Recording Demo Video</p>
-                  </div>
-                </TabsContent>
-              </motion.div>
-            </AnimatePresence>
-          </Tabs>
-        </div>
-      </section>
-
+        </section>
+      </Element>
 
       {/* Testimonials Section */}
-      <section id="testimonials" className="py-16 sm:py-24">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center mb-12">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">What Our Users Say</h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Discover how IdeaVine is transforming the way people think and work.
-            </p>
-          </div>
-          <div className="grid gap-8 md:grid-cols-3">
-            {testimonials.map((testimonial, index) => (
-              <motion.div
-                key={index}
-                className="bg-card rounded-lg p-6 shadow-sm"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <p className="text-muted-foreground mb-4">{testimonial.content}</p>
-                <div className="flex items-center">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={testimonial.avatar} alt={testimonial.name} />
-                    <AvatarFallback>{testimonial.name[0]}</AvatarFallback>
-                  </Avatar>
-                  <div className="ml-3">
-                    <p className="font-semibold">{testimonial.name}</p>
-                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+      <Element name="testimonials">
+        <section className="py-16 sm:py-24">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-2xl text-center mb-12">
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">What Our Users Say</h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                Discover how IdeaVine is transforming the way people think and work.
+              </p>
+            </div>
+            <div className="grid gap-8 md:grid-cols-3">
+              {testimonials.map((testimonial, index) => (
+                <motion.div
+                  key={index}
+                  className="bg-card rounded-lg p-6 shadow-sm"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  <p className="text-muted-foreground mb-4">{testimonial.content}</p>
+                  <div className="flex items-center">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={testimonial.avatar} alt={testimonial.name} />
+                      <AvatarFallback>{testimonial.name[0]}</AvatarFallback>
+                    </Avatar>
+                    <div className="ml-3">
+                      <p className="font-semibold">{testimonial.name}</p>
+                      <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </Element>
 
       {/* FAQ Section */}
-  {/* FAQ Section */}
-      <section id="faq" className="py-16 sm:py-24 bg-background">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center mb-12">
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Frequently Asked Questions</h2>
-            <p className="mt-4 text-lg text-muted-foreground">
-              Find answers to common questions about IdeaVine.
-            </p>
-          </div>
-          <div className="max-w-3xl mx-auto">
-            {faqItems.map((item, index) => (
-              <Card key={index} className="mb-4">
-                <Accordion type="single" collapsible>
-                  <AccordionItem value={`item-${index}`}>
-                    <AccordionTrigger className="text-left px-6 py-4 hover:no-underline">
+      <Element name="faq">
+        <section className="py-16 sm:py-24 bg-background">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-2xl text-center mb-12">
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Frequently Asked Questions</h2>
+              <p className="mt-4 text-lg text-muted-foreground">
+                Find answers to common questions about IdeaVine.
+              </p>
+            </div>
+            <div className="max-w-3xl mx-auto">
+              <Accordion type="single" collapsible className="space-y-4">
+                {faqItems.map((item, index) => (
+                  <AccordionItem key={index} value={`item-${index}`} className="border rounded-lg overflow-hidden">
+                    <AccordionTrigger className="bg-card hover:bg-card/90 px-6 py-4 text-left">
                       <span className="font-semibold text-lg">{item.question}</span>
                     </AccordionTrigger>
-                    <AccordionContent className="px-6 pb-4">
-                      <p className="text-muted-foreground">{item.answer}</p>
+                    <AccordionContent className="bg-background px-6 py-4">
+                      <Card className="p-4 bg-muted/50">
+                        <p className="text-muted-foreground">{item.answer}</p>
+                      </Card>
                     </AccordionContent>
                   </AccordionItem>
-                </Accordion>
-              </Card>
-            ))}
+                ))}
+              </Accordion>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </Element>
 
       {/* CTA Section */}
       <section className="bg-primary py-16 sm:py-24">
@@ -402,7 +424,7 @@ function LandingPageContent() {
                 placeholder="Enter your email"
                 value={email}
                 onChange={handleEmailChange}
-                className={`w-full sm:w-64 rounded-full ${!isEmailValid ? 'border-red-500' : ''}`}
+                className={`w-full sm:w-64 text-secondary rounded-full ${!isEmailValid ? 'border-red-500' : ''}`}
               />
               <Button type="submit" size="lg" className="mt-3 w-full sm:mt-0 sm:ml-3 sm:w-auto rounded-full">
                 {isSubmitted ? (
@@ -437,7 +459,7 @@ function LandingPageContent() {
             </nav>
           </div>
           <div className="mt-8 text-center text-sm text-muted-foreground">
-            © 2023 IdeaVine. All rights reserved.
+            © 2024 IdeaVine. All rights reserved.
           </div>
         </div>
       </footer>
@@ -447,7 +469,7 @@ function LandingPageContent() {
 
 export default function LandingPage() {
   return (
-    <ThemeProvider>
+    <ThemeProvider defaultTheme="dark">
       <LandingPageContent />
     </ThemeProvider>
   )

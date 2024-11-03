@@ -48,15 +48,16 @@ export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/20 via-background to-secondary/20 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-secondary/20 via-background to-primary/20 flex items-center justify-center px-4">
       <motion.div
         initial="initial"
         animate="in"
         exit="out"
         variants={pageVariants}
         transition={pageTransition}
+        className="w-full max-w-xl" // Increased max-width here
       >
-        <Card className="w-full max-w-md overflow-hidden">
+        <Card className="w-full overflow-hidden">
           <CardHeader className="space-y-1 bg-primary text-primary-foreground p-6">
             <div className="flex items-center justify-center mb-4">
               <motion.div
@@ -75,8 +76,8 @@ export default function AuthPage({ onLogin, onSignup }: AuthPageProps) {
           <CardContent className="p-6">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-8">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                <TabsTrigger value="login" className="bg-secondary">Login</TabsTrigger>
+                <TabsTrigger value="signup" className="bg-secondary">Sign Up</TabsTrigger>
               </TabsList>
               <AnimatePresence mode="wait">
                 <motion.div
