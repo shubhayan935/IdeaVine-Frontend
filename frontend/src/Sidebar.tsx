@@ -258,7 +258,7 @@ export function AppSidebar() {
           <div className="space-y-6">
             <div className="px-4">
               <Button 
-                className="w-full justify-start gap-2 shadow-sm hover:shadow" 
+                className="w-full justify-center gap-2 shadow-sm hover:shadow" 
                 size="lg"
               >
                 <Plus className="h-4 w-4" />
