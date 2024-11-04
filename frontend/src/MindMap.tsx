@@ -304,7 +304,7 @@ function MindMapContent() {
     if (!mindmapUid) return; // Ensure UID is set
 
     try {
-      console.log("Email is: ", userEmail);
+      console.log("Updating Database for this Email: ", userEmail);
       const response = await fetch('http://127.0.0.1:5000/mindmaps/update', {
         method: 'POST',
         headers: {
@@ -333,17 +333,17 @@ function MindMapContent() {
       const data = await response.json();
       console.log('Mindmap updated successfully:', data);
 
-      toast({
-        title: "Mindmap Updated",
-        description: "Your mindmap has been successfully saved.",
-      });
+      // toast({
+      //   title: "Mindmap Updated",
+      //   description: "Your mindmap has been successfully saved.",
+      // });
     } catch (error) {
       console.error(error);
-      toast({
-        title: "Update Failed",
-        description: "There was an error saving your mindmap. Please try again.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Update Failed",
+      //   description: "There was an error saving your mindmap. Please try again.",
+      //   variant: "destructive",
+      // });
     }
   }, [mindmapUid, mapTitle, nodes, toast]);
 
