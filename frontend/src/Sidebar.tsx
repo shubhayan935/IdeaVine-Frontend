@@ -5,6 +5,7 @@ import { Search, LogOut, Plus, Leaf, Calendar, Clock, Settings, Palette } from "
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import {
   Sidebar,
@@ -27,6 +28,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useClerk } from '@clerk/clerk-react' // Import useClerk
+import { useNavigate } from 'react-router-dom'
 
 // Sample mindmap history data
 const mindmapHistory = [
@@ -49,7 +52,7 @@ interface ThemeOption {
 const themeOptions: ThemeOption[] = [
   { name: 'light', primaryColor: '#ffffff', secondaryColor: '#000000', label: 'Light' },
   { name: 'dark', primaryColor: '#1a1a1a', secondaryColor: '#ffffff', label: 'Dark' },
-  { name: 'beige', primaryColor: '#8b4513', secondaryColor: '#f5f5dc', label: 'Beige' },
+  { name: 'beige', primaryColor: '#f5f5dc', secondaryColor: '#8b4513', label: 'Beige' },
   { name: 'lavender', primaryColor: '#e6e6fa', secondaryColor: '#000000', label: 'Lavender' },
 ]
 
@@ -61,6 +64,9 @@ export function AppSidebar() {
   const filteredHistory = mindmapHistory.filter(item =>
     item.title.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const { signOut } = useClerk() // Destructure signOut from useClerk
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -78,6 +84,54 @@ export function AppSidebar() {
     document.documentElement.classList.add(theme)
     localStorage.setItem('theme', theme)
   }, [theme])
+
+  const handleSetActiveTab = (value: 'login' | 'signup' | 'forgotPassword') => {
+    setActiveTab(value)
+    setErrors([])
+    setEmailAddress('')
+    setPassword('')
+    setFirstName('')
+    setLastName('')
+    setVerificationCode('')
+    setIsVerifying(false)
+    setSuccessfulReset(false)
+    setLoginPasswordVisible(false)
+    setSignupPasswordVisible(false)
+    setResetPasswordVisible(false)
+    setLoginPasswordError(false)
+    setSignupPasswordError(false)
+    setResetPasswordError(false)
+  }
+
+  // Define activeTab and related states (assuming these are defined elsewhere or need to be added)
+  const [activeTabInternal, setActiveTabInternal] = useState<'login' | 'signup' | 'forgotPassword'>('login')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [emailAddress, setEmailAddress] = useState('')
+  const [password, setPassword] = useState('')
+  const [verificationCode, setVerificationCode] = useState('')
+  const [errors, setErrors] = useState<string[]>([])
+  const [isVerifying, setIsVerifying] = useState(false)
+  const [successfulReset, setSuccessfulReset] = useState(false)
+  const [secondFactor, setSecondFactor] = useState(false)
+  const [loginPasswordVisible, setLoginPasswordVisible] = useState(false)
+  const [signupPasswordVisible, setSignupPasswordVisible] = useState(false)
+  const [resetPasswordVisible, setResetPasswordVisible] = useState(false)
+  const [loginPasswordError, setLoginPasswordError] = useState(false)
+  const [signupPasswordError, setSignupPasswordError] = useState(false)
+  const [resetPasswordError, setResetPasswordError] = useState(false)
+
+  // Implement the handleLogout function
+  const handleLogout = async () => {
+    try {
+      await signOut() // Sign out the user
+      console.log("User logged out:", emailAddress) // Optional: Log the email
+      navigate('/') // Redirect to the landing page
+    } catch (error) {
+      console.error("Error logging out:", error)
+      // Optionally, display an error message to the user
+    }
+  }
 
   return (
     <Sidebar className="border-r border-border/50 shadow-sm transition-colors duration-300">
@@ -347,7 +401,10 @@ export function AppSidebar() {
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive cursor-pointer" onClick={() => console.log("Logging out...")}>
+            <DropdownMenuItem 
+              className="text-destructive cursor-pointer flex items-center" 
+              onClick={handleLogout} // Attach handleLogout here
+            >
               <LogOut className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>
