@@ -1,3 +1,5 @@
+// MindMap.tsx
+
 'use client';
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
@@ -44,7 +46,10 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "./Sidebar";
+import debounce from 'lodash.debounce'; // Import debounce
+import { v4 as uuidv4 } from 'uuid'; // Import UUID for generating UID
 
+// Define the structure of your custom node data
 interface CustomNodeData {
   title: string;
   content: string;
@@ -54,18 +59,21 @@ interface CustomNodeData {
   isHighlighted?: boolean;
 }
 
+// Define the props for your custom node component
 interface CustomNodeProps extends NodeProps {
   data: CustomNodeData;
   isConnectable: boolean;
   selected: boolean;
 }
 
+// Custom Node Component
 const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [nodeData, setNodeData] = useState<CustomNodeData>(data);
   const { setNodes, setEdges, getNode } = useReactFlow();
   const nodeRef = useRef<HTMLDivElement>(null);
 
+  // Handle double-click to edit the node
   const handleEdit = useCallback(() => {
     setIsEditing(true);
     setNodes((nds) =>
@@ -78,6 +86,7 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
     );
   }, [id, setNodes]);
 
+  // Handle blur (when editing is done)
   const handleBlur = useCallback(() => {
     setIsEditing(false);
     setNodes((nds) =>
@@ -90,6 +99,7 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
     );
   }, [id, nodeData, setNodes]);
 
+  // Handle node deletion
   const handleDelete = useCallback(() => {
     setNodes((nds) => {
       const updatedNodes = nds.filter((node) => node.id !== id);
@@ -105,6 +115,7 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
     setEdges((eds) => eds.filter((edge) => edge.source !== id && edge.target !== id));
   }, [id, setNodes, setEdges]);
 
+  // Handle adding a new node in a specific direction
   const handleAddNode = useCallback(
     (position: 'top' | 'bottom' | 'left' | 'right') => {
       const parentNode = getNode(id);
@@ -144,6 +155,7 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
     [id, getNode, setNodes, setEdges, data.depth]
   );
 
+  // Handle click outside to finish editing
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (nodeRef.current && !nodeRef.current.contains(event.target as Node) && isEditing) {
@@ -162,6 +174,7 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
 
   return (
     <div className="relative" ref={nodeRef}>
+      {/* Handles for connections */}
       <Handle type="target" position={Position.Top} isConnectable={isConnectable} />
       <div className={`px-4 py-2 shadow-md rounded-md bg-white border-2 ${
                         selected ? 'border-primary' : 'border-gray-200'
@@ -169,6 +182,7 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
                         data.isHighlighted ? 'bg-yellow-100' : ''
                       } transition-[background-color] duration-1000`}>
         {isEditing ? (
+          // Editing Mode
           <div className="flex flex-col gap-2">
             <Input
               value={nodeData.title}
@@ -191,15 +205,18 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
             </div>
           </div>
         ) : (
+          // Display Mode
           <div onDoubleClick={handleEdit}>
             <div className="font-bold">{data.title}</div>
             <div>{data.content}</div>
           </div>
         )}
       </div>
+      {/* More Handles */}
       <Handle type="source" position={Position.Bottom} isConnectable={isConnectable} />
       <Handle type="source" position={Position.Left} isConnectable={isConnectable} />
       <Handle type="source" position={Position.Right} isConnectable={isConnectable} />
+      {/* Add Node Buttons */}
       {['top', 'right', 'bottom', 'left'].map((position) => (
         <div
           key={position}
@@ -227,10 +244,12 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
   );
 };
 
+// Define the node types for ReactFlow
 const nodeTypes = {
   customNode: CustomNode,
 };
 
+// Initial Nodes
 const initialNodes: Node<CustomNodeData>[] = [
   {
     id: '1',
@@ -240,13 +259,13 @@ const initialNodes: Node<CustomNodeData>[] = [
   },
 ];
 
+// Main MindMapContent Component
 function MindMapContent() {
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNodeData>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const { project, fitView, setCenter } = useReactFlow();
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
-  const [writtenContent, setWrittenContent] = useState<string>('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [mapTitle, setMapTitle] = useState<string>('Untitled Mind Map');
   const [previousTitle, setPreviousTitle] = useState<string>('Untitled Mind Map');
@@ -266,227 +285,82 @@ function MindMapContent() {
 
   const [searchTerm, setSearchTerm] = useState('');
 
-  const handleTitleBlur = () => {
-    if (mapTitle.trim() === '') {
-      setMapTitle(previousTitle);
-    } else {
-      setPreviousTitle(mapTitle);
-    }
-  };
+  const [mindmapUid, setMindmapUid] = useState<string>('');
 
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMapTitle(e.target.value);
-  };
+  // Generate a unique UID when the component mounts
+  useEffect(() => {
+    const uid = uuidv4();
+    setMindmapUid(uid);
+    // Optionally, create the mindmap in the backend here if it's a new mindmap
+  }, []);
 
-  const startRecording = async () => {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      console.error('MediaDevices API not supported.');
-      return;
-    }
+  // Define the updateMindmapDB function
+  const updateMindmapDB = useCallback(async () => {
+    if (!mindmapUid) return; // Ensure UID is set
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-      audioChunksRef.current = [];
-
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        await handleAudioUpload(audioBlob);
-      };
-
-      mediaRecorderRef.current.start();
-      setIsRecording(true);
-      setIsRecordingLoading(false);
-      toast({
-        title: "Recording started",
-        description: "Your audio is now being recorded.",
-      });
-    } catch (err) {
-      console.error('Error accessing microphone:', err);
-      setIsRecordingLoading(false);
-      toast({
-        title: "Recording failed",
-        description: "Unable to access the microphone. Please check your permissions.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsRecordingLoading(false);
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      setIsRecordingLoading(true);
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      toast({
-        title: "Recording stopped",
-        description: "Your audio is being processed.",
-      });
-    }
-  };
-
-  const handleRecording = () => {
-    if (!isRecording) {
-      startRecording();
-    } else {
-      stopRecording();
-    }
-  };
-
-  const processBackendNodes = (backendNodes: any[]) => {
-    const newNodes: Node<CustomNodeData>[] = [];
-    const newEdgesMap = new Map<string, Edge>();
-    const nodeMap = new Map<string, Node<CustomNodeData>>();
-    const levelMap = new Map<number, Node<CustomNodeData>[]>();
-
-    // Generate a unique prefix to avoid ID conflicts
-    const uniquePrefix = `audio-${Date.now()}-`;
-    const existingNodeIds = new Set(nodes.map((node) => node.id));
-    const idMap = new Map<string, string>();
-
-    // First pass: Create new IDs and build idMap
-    backendNodes.forEach((node) => {
-      const oldId = node.id;
-      let newId = uniquePrefix + oldId;
-
-      // Ensure the new ID is unique among existing node IDs
-      while (existingNodeIds.has(newId)) {
-        newId = uniquePrefix + oldId + '-' + Math.random().toString(36).substr(2, 9);
-      }
-
-      idMap.set(oldId, newId);
-      existingNodeIds.add(newId);
-    });
-
-    // Second pass: Create nodes with new IDs and update parents/children
-    backendNodes.forEach((node) => {
-      const newId = idMap.get(node.id)!;
-
-      const parents = node.parents
-        ? node.parents
-            .split(',')
-            .map((id: string) => id.trim())
-            .filter((id: string) => id.length > 0)
-            .map((id: string) => idMap.get(id) || id)
-        : [];
-
-      const children = node.children
-        ? node.children
-            .split(',')
-            .map((id: string) => id.trim())
-            .filter((id: string) => id.length > 0)
-            .map((id: string) => idMap.get(id) || id)
-        : [];
-
-      const reactFlowNode: Node<CustomNodeData> = {
-        id: newId,
-        type: 'customNode',
-        data: {
-          title: node.title,
-          content: node.content,
-          parents,
-          children,
-          depth: 0,
-        },
-        position: { x: 0, y: 0 },
-      };
-      newNodes.push(reactFlowNode);
-      nodeMap.set(newId, reactFlowNode);
-    });
-
-    // Second pass: Create edges and calculate depths
-    newNodes.forEach((node) => {
-      const { id, data } = node;
-
-      // Calculate node depth based on longest path from root
-      const calculateDepth = (nodeId: string, visited = new Set<string>()): number => {
-        if (visited.has(nodeId)) return 0;
-        visited.add(nodeId);
-
-        const currentNode = nodeMap.get(nodeId);
-        if (!currentNode) return 0;
-
-        if (currentNode.data.parents.length === 0) return 0;
-
-        const parentDepths = currentNode.data.parents.map((parentId) =>
-          calculateDepth(parentId, visited)
-        );
-
-        return 1 + Math.max(...parentDepths, 0);
-      };
-
-      const depth = calculateDepth(id);
-      node.data.depth = depth;
-
-      // Group nodes by their depth level
-      if (!levelMap.has(depth)) {
-        levelMap.set(depth, []);
-      }
-      levelMap.get(depth)?.push(node);
-
-      // Create edges
-      data.parents.forEach((parentId) => {
-        const edgeId = `e${parentId}-${id}`;
-        if (!newEdgesMap.has(edgeId)) {
-          newEdgesMap.set(edgeId, {
-            id: edgeId,
-            source: parentId,
-            target: id,
-          });
-        }
-      });
-    });
-
-    const newEdges = Array.from(newEdgesMap.values());
-    return { newNodes, newEdges };
-  };
-
-  const handleAudioUpload = async (audioBlob: Blob) => {
-    const formData = new FormData();
-
-    formData.append('audio_file', audioBlob, 'recording.webm');
-
-    try {
-      const response = await fetch('http://127.0.0.1:5000/process_audio', {
+      const response = await fetch('http://127.0.0.1:5000/mindmaps/update', {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          uid: mindmapUid,
+          title: mapTitle,
+          nodes: nodes.map((node) => ({
+            id: node.id,
+            title: node.data.title,
+            content: node.data.content,
+            position: node.position,
+            parents: node.data.parents,
+            children: node.data.children,
+            depth: node.data.depth,
+          })),
+        }),
       });
 
       if (!response.ok) {
-        console.error('Failed to upload audio');
-        return;
+        throw new Error(`Failed to update mindmap: ${response.statusText}`);
       }
 
       const data = await response.json();
-      const nodesFromBackend = data.nodes;
-      console.log(nodesFromBackend);
+      console.log('Mindmap updated successfully:', data);
 
-      const { newNodes, newEdges } = processBackendNodes(nodesFromBackend);
-
-      setNodes((nds) => [...nds, ...newNodes]);
-      setEdges((eds) => [...eds, ...newEdges]);
-      setIsRecordingLoading(false);
-
-      setLayoutOnNextRender(true);
-    } catch (err) {
-      console.error('Error uploading audio:', err);
+      toast({
+        title: "Mindmap Updated",
+        description: "Your mindmap has been successfully saved.",
+      });
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Update Failed",
+        description: "There was an error saving your mindmap. Please try again.",
+        variant: "destructive",
+      });
     }
-  };
+  }, [mindmapUid, mapTitle, nodes, toast]);
 
+  // Debounced version of updateMindmapDB
+  const debouncedUpdateMindmapDB = useCallback(
+    debounce(() => {
+      updateMindmapDB();
+    }, 1000), // 1-second debounce
+    [updateMindmapDB]
+  );
+
+  // useEffect to watch for changes in nodes and title
   useEffect(() => {
-    if (layoutOnNextRender) {
-      onLayout();
-      setLayoutOnNextRender(false);
-    }
-  }, [nodes, layoutOnNextRender]);
+    if (mindmapUid) { // Ensure UID is set
+      debouncedUpdateMindmapDB();
 
+      // Cleanup function to cancel debounce on unmount or when dependencies change
+      return () => {
+        debouncedUpdateMindmapDB.cancel();
+      };
+    }
+  }, [nodes, mapTitle, debouncedUpdateMindmapDB, mindmapUid]);
+
+  // Handle node connections
   const onConnect = useCallback(
     (params: Edge | Connection) => {
       const newEdge = {
@@ -516,12 +390,14 @@ function MindMapContent() {
     [setEdges, setNodes]
   );
 
+  // Handle node selection changes
   useOnSelectionChange({
     onChange: ({ nodes }) => {
       setSelectedNodes(nodes.map((node) => node.id));
     },
   });
 
+  // Add a new node manually
   const onAddNode = useCallback(() => {
     const newNode: Node<CustomNodeData> = {
       id: `node-${Date.now()}`,
@@ -530,8 +406,11 @@ function MindMapContent() {
       position: { x: Math.random() * 500, y: Math.random() * 500 },
     };
     setNodes((nds) => [...nds, newNode]);
+
+    // No need to call updateMindmapDB directly due to useEffect with debounce
   }, [setNodes]);
 
+  // Auto layout the mind map using Dagre
   const onLayout = useCallback(() => {
     if (!reactFlowInstance.current) return;
 
@@ -582,6 +461,7 @@ function MindMapContent() {
     });
   }, [setNodes, fitView]);
 
+  // Handle suggestions (e.g., AI-generated nodes)
   const handleSuggest = useCallback(async () => {
     if (selectedNodes.length === 0) {
       toast({
@@ -682,6 +562,7 @@ function MindMapContent() {
     }
   }, [selectedNodes, nodes, setNodes, setEdges, toast, onLayout]);
 
+  // Handle writing/generating an essay from the mind map
   const handleWrite = useCallback(async () => {
     setIsWriteLoading(true);
     const allNodesData = nodes.map((node) => ({
@@ -722,7 +603,7 @@ function MindMapContent() {
     }
   }, [nodes, toast]);
 
-
+  // Handle searching for nodes
   const handleSearch = useCallback(() => {
     if (!searchTerm) return;
 
@@ -767,12 +648,240 @@ function MindMapContent() {
     }
   }, [searchTerm, nodes, setCenter, setNodes, toast]);
 
+  // Initialize ReactFlow instance
   const onInit = useCallback((instance: ReactFlowInstance) => {
     reactFlowInstance.current = instance;
 
     // Adjust the initial fitView options
     instance.fitView({ padding: 0.2, maxZoom: 0.8 });
   }, []);
+
+  // Handle recording (start/stop)
+  const handleRecording = () => {
+    if (!isRecording) {
+      startRecording();
+    } else {
+      stopRecording();
+    }
+  };
+
+  // Start recording audio
+  const startRecording = async () => {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.error('MediaDevices API not supported.');
+      return;
+    }
+
+    try {
+      setIsRecordingLoading(true);
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      audioChunksRef.current = [];
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorderRef.current.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        await handleAudioUpload(audioBlob);
+      };
+
+      mediaRecorderRef.current.start();
+      setIsRecording(true);
+      setIsRecordingLoading(false);
+      toast({
+        title: "Recording started",
+        description: "Your audio is now being recorded.",
+      });
+    } catch (err) {
+      console.error('Error accessing microphone:', err);
+      setIsRecordingLoading(false);
+      toast({
+        title: "Recording failed",
+        description: "Unable to access the microphone. Please check your permissions.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Stop recording audio
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      setIsRecordingLoading(true);
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      toast({
+        title: "Recording stopped",
+        description: "Your audio is being processed.",
+      });
+    }
+  };
+
+  // Handle audio upload to backend
+  const handleAudioUpload = async (audioBlob: Blob) => {
+    const formData = new FormData();
+
+    formData.append('audio_file', audioBlob, 'recording.webm');
+
+    try {
+      const response = await fetch('http://127.0.0.1:5000/process_audio', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        console.error('Failed to upload audio');
+        return;
+      }
+
+      const data = await response.json();
+      const nodesFromBackend = data.nodes;
+      console.log(nodesFromBackend);
+
+      const { newNodes, newEdges } = processBackendNodes(nodesFromBackend);
+
+      setNodes((nds) => [...nds, ...newNodes]);
+      setEdges((eds) => [...eds, ...newEdges]);
+      setIsRecordingLoading(false);
+
+      setLayoutOnNextRender(true);
+    } catch (err) {
+      console.error('Error uploading audio:', err);
+      setIsRecordingLoading(false);
+      toast({
+        title: "Audio Upload Failed",
+        description: "There was an error uploading your audio. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Process nodes received from backend after audio processing
+  const processBackendNodes = (backendNodes: any[]) => {
+    const newNodes: Node<CustomNodeData>[] = [];
+    const newEdgesMap = new Map<string, Edge>();
+    const nodeMap = new Map<string, Node<CustomNodeData>>();
+    const levelMap = new Map<number, Node<CustomNodeData>[]>();
+
+    // Generate a unique prefix to avoid ID conflicts
+    const uniquePrefix = `audio-${Date.now()}-`;
+    const existingNodeIds = new Set(nodes.map((node) => node.id));
+    const idMap = new Map<string, string>();
+
+    // First pass: Create new IDs and build idMap
+    backendNodes.forEach((node) => {
+      const oldId = node.id;
+      let newId = uniquePrefix + oldId;
+
+      // Ensure the new ID is unique among existing node IDs
+      while (existingNodeIds.has(newId)) {
+        newId = uniquePrefix + oldId + '-' + Math.random().toString(36).substr(2, 9);
+      }
+
+      idMap.set(oldId, newId);
+      existingNodeIds.add(newId);
+    });
+
+    // Second pass: Create nodes with new IDs and update parents/children
+    backendNodes.forEach((node) => {
+      const newId = idMap.get(node.id)!;
+
+      const parents = node.parents
+        ? node.parents
+            .split(',')
+            .map((id: string) => id.trim())
+            .filter((id: string) => id.length > 0)
+            .map((id: string) => idMap.get(id) || id)
+        : [];
+
+      const children = node.children
+        ? node.children
+            .split(',')
+            .map((id: string) => id.trim())
+            .filter((id: string) => id.length > 0)
+            .map((id: string) => idMap.get(id) || id)
+        : [];
+
+      const reactFlowNode: Node<CustomNodeData> = {
+        id: newId,
+        type: 'customNode',
+        data: {
+          title: node.title,
+          content: node.content,
+          parents,
+          children,
+          depth: 0,
+        },
+        position: { x: 0, y: 0 },
+      };
+      newNodes.push(reactFlowNode);
+      nodeMap.set(newId, reactFlowNode);
+    });
+
+    // Calculate depths and create edges
+    newNodes.forEach((node) => {
+      const { id, data } = node;
+
+      // Calculate node depth based on longest path from root
+      const calculateDepth = (nodeId: string, visited = new Set<string>()): number => {
+        if (visited.has(nodeId)) return 0;
+        visited.add(nodeId);
+
+        const currentNode = nodeMap.get(nodeId);
+        if (!currentNode) return 0;
+
+        if (currentNode.data.parents.length === 0) return 0;
+
+        const parentDepths = currentNode.data.parents.map((parentId) =>
+          calculateDepth(parentId, visited)
+        );
+
+        return 1 + Math.max(...parentDepths, 0);
+      };
+
+      const depth = calculateDepth(id);
+      node.data.depth = depth;
+
+      // Group nodes by their depth level
+      if (!levelMap.has(depth)) {
+        levelMap.set(depth, []);
+      }
+      levelMap.get(depth)?.push(node);
+
+      // Create edges
+      data.parents.forEach((parentId) => {
+        const edgeId = `e${parentId}-${id}`;
+        if (!newEdgesMap.has(edgeId)) {
+          newEdgesMap.set(edgeId, {
+            id: edgeId,
+            source: parentId,
+            target: id,
+          });
+        }
+      });
+    });
+
+    const newEdges = Array.from(newEdgesMap.values());
+    return { newNodes, newEdges };
+  };
+
+  // Handle user logout (if applicable)
+  // Define your logout logic here. For example:
+  /*
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      console.log("User logged out");
+      navigate('/'); // Redirect to landing page
+    } catch (error) {
+      console.error("Error logging out:", error);
+      // Optionally, display an error message to the user
+    }
+  };
+  */
 
   return (
     <SidebarProvider>
@@ -794,12 +903,19 @@ function MindMapContent() {
                 padding: '10px',
               }}
               value={mapTitle}
-              onChange={handleTitleChange}
-              onBlur={handleTitleBlur}
+              onChange={(e) => setMapTitle(e.target.value)}
+              onBlur={() => {
+                if (mapTitle.trim() === '') {
+                  setMapTitle(previousTitle);
+                } else {
+                  setPreviousTitle(mapTitle);
+                }
+              }}
               title={mapTitle}
             />
           </div>
           <div className="flex gap-2">
+            {/* Recording Button */}
             <Button onClick={handleRecording} disabled={isRecordingLoading} className="relative overflow-hidden">
               {isRecordingLoading ? (
                 <div className="absolute inset-0 flex items-center justify-center bg-primary">
@@ -817,6 +933,7 @@ function MindMapContent() {
                 </>
               )}
             </Button>
+            {/* Suggest Button */}
             <Button onClick={handleSuggest}
               disabled={selectedNodes.length === 0 || isSuggestLoading}
               className="relative overflow-hidden"
@@ -832,6 +949,7 @@ function MindMapContent() {
                 </>
               )}
             </Button>
+            {/* Write Button */}
             <Button onClick={handleWrite} disabled={isWriteLoading} className="relative overflow-hidden">
               {isWriteLoading ? (
                 <div className="absolute inset-0 flex items-center justify-center bg-primary">
@@ -846,8 +964,10 @@ function MindMapContent() {
             </Button>
           </div>
         </div>
+        {/* Main Content */}
         <div className="flex-grow overflow-hidden flex">
-          <div className={`flex-grow transition-all duration-300 ${isSidebarOpen ? 'mr-64' : ''}`}>
+          {/* ReactFlow Container */}
+          <div className={`flex-grow transition-all duration-300 ${isSidebarOpen ? 'mr-96' : ''}`}>
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -863,33 +983,37 @@ function MindMapContent() {
               <MiniMap position="bottom-right" />
               <Panel position="top-right">
                 <div className="flex gap-2 items-center">
-                <div className="relative w-full">
-                  <Input
-                    type="text"
-                    placeholder="Search nodes..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        handleSearch();
-                      }
-                    }}
-                    className="pr-10 w-full"
-                  />
-                  <Button
-                    onClick={handleSearch}
-                    className="absolute inset-y-0 right-0 px-2 items-center text-secondary bg-primary"
-                    variant="outline"
-                  >
-                    <Search className="h-4 w-4" />
-                  </Button>
-                </div>
-                <Button onClick={onAddNode}>Add Node</Button>
-                <Button onClick={onLayout}>Auto Layout</Button>
+                  {/* Search Input */}
+                  <div className="relative w-full">
+                    <Input
+                      type="text"
+                      placeholder="Search nodes..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleSearch();
+                        }
+                      }}
+                      className="pr-10 w-full"
+                    />
+                    <Button
+                      onClick={handleSearch}
+                      className="absolute inset-y-0 right-0 px-2 items-center text-secondary bg-primary"
+                      variant="outline"
+                    >
+                      <Search className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  {/* Add Node Button */}
+                  <Button onClick={onAddNode}>Add Node</Button>
+                  {/* Auto Layout Button */}
+                  <Button onClick={onLayout}>Auto Layout</Button>
                 </div>
               </Panel>
             </ReactFlow>
           </div>
+          {/* Sidebar for Generated Essay */}
           <div
             className={`fixed top-0 right-0 h-full w-96 bg-white shadow-lg transform transition-transform duration-300 ${
               isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
@@ -930,6 +1054,7 @@ function MindMapContent() {
   );
 }
 
+// Exported MindMap Component wrapped with ReactFlowProvider
 export default function MindMap() {
   return (
     <div className="w-full h-full">
