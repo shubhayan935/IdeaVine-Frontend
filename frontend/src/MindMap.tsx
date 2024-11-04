@@ -48,6 +48,7 @@ import {
 import { AppSidebar } from "./Sidebar";
 import debounce from 'lodash.debounce'; // Import debounce
 import { v4 as uuidv4 } from 'uuid'; // Import UUID for generating UID
+import { useUser } from '@clerk/clerk-react';
 
 // Define the structure of your custom node data
 interface CustomNodeData {
@@ -287,6 +288,10 @@ function MindMapContent() {
 
   const [mindmapUid, setMindmapUid] = useState<string>('');
 
+  const { user, isLoaded, isSignedIn } = useUser();
+
+  const userEmail = user.emailAddresses[0]?.emailAddress || '';
+
   // Generate a unique UID when the component mounts
   useEffect(() => {
     const uid = uuidv4();
@@ -299,6 +304,7 @@ function MindMapContent() {
     if (!mindmapUid) return; // Ensure UID is set
 
     try {
+      console.log("Email is: ", userEmail);
       const response = await fetch('http://127.0.0.1:5000/mindmaps/update', {
         method: 'POST',
         headers: {
@@ -307,6 +313,7 @@ function MindMapContent() {
         body: JSON.stringify({
           uid: mindmapUid,
           title: mapTitle,
+          user_email: userEmail,
           nodes: nodes.map((node) => ({
             id: node.id,
             title: node.data.title,
@@ -350,7 +357,7 @@ function MindMapContent() {
 
   // useEffect to watch for changes in nodes and title
   useEffect(() => {
-    if (mindmapUid) { // Ensure UID is set
+    if (mindmapUid && user) { // Ensure UID is set
       debouncedUpdateMindmapDB();
 
       // Cleanup function to cancel debounce on unmount or when dependencies change
