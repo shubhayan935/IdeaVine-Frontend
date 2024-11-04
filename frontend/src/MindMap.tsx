@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import dagre from 'dagre';
 import ReactFlow, {
   Node,
   Edge,
@@ -16,6 +17,10 @@ import ReactFlow, {
   Position,
   ReactFlowProvider,
   useReactFlow,
+  MarkerType,
+  useOnSelectionChange,
+  Panel,
+  ReactFlowInstance,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Button } from "@/components/ui/button";
@@ -30,25 +35,15 @@ import {
   Lightbulb,
   PenTool,
   X,
+  Search,
 } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarHeader,
-  SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar"
-import { AppSidebar } from "./Sidebar"
+} from "@/components/ui/sidebar";
+import { AppSidebar } from "./Sidebar";
 
 interface CustomNodeData {
   title: string;
@@ -56,13 +51,16 @@ interface CustomNodeData {
   parents: string[];
   children: string[];
   depth: number;
+  isHighlighted?: boolean;
 }
 
 interface CustomNodeProps extends NodeProps {
   data: CustomNodeData;
+  isConnectable: boolean;
+  selected: boolean;
 }
 
-const CustomNode = ({ id, data }: CustomNodeProps) => {
+const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [nodeData, setNodeData] = useState<CustomNodeData>(data);
   const { setNodes, setEdges, getNode } = useReactFlow();
@@ -133,7 +131,14 @@ const CustomNode = ({ id, data }: CustomNodeProps) => {
         newNode,
       ]);
       setEdges((eds) =>
-        addEdge({ id: `e${id}-${newNodeId}`, source: id, target: newNodeId }, eds)
+        addEdge(
+          {
+            id: `e${id}-${newNodeId}`,
+            source: id,
+            target: newNodeId,
+          },
+          eds
+        )
       );
     },
     [id, getNode, setNodes, setEdges, data.depth]
@@ -157,8 +162,12 @@ const CustomNode = ({ id, data }: CustomNodeProps) => {
 
   return (
     <div className="relative" ref={nodeRef}>
-      <Handle type="target" position={Position.Top} />
-      <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-gray-200">
+      <Handle type="target" position={Position.Top} isConnectable={isConnectable} />
+      <div className={`px-4 py-2 shadow-md rounded-md bg-white border-2 ${
+                        selected ? 'border-primary' : 'border-gray-200'
+                      } ${
+                        data.isHighlighted ? 'bg-yellow-100' : ''
+                      } transition-[background-color] duration-1000`}>
         {isEditing ? (
           <div className="flex flex-col gap-2">
             <Input
@@ -188,9 +197,9 @@ const CustomNode = ({ id, data }: CustomNodeProps) => {
           </div>
         )}
       </div>
-      <Handle type="source" position={Position.Bottom} />
-      <Handle type="source" position={Position.Left} />
-      <Handle type="source" position={Position.Right} />
+      <Handle type="source" position={Position.Bottom} isConnectable={isConnectable} />
+      <Handle type="source" position={Position.Left} isConnectable={isConnectable} />
+      <Handle type="source" position={Position.Right} isConnectable={isConnectable} />
       {['top', 'right', 'bottom', 'left'].map((position) => (
         <div
           key={position}
@@ -227,19 +236,21 @@ const initialNodes: Node<CustomNodeData>[] = [
     id: '1',
     type: 'customNode',
     data: { title: 'Main Idea', content: 'Start your mind map here', parents: [], children: [], depth: 0 },
-    position: { x: 250, y: 0 },
+    position: { x: 0, y: 0 },
   },
 ];
 
 function MindMapContent() {
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNodeData>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const { project } = useReactFlow();
+  const { project, fitView, setCenter } = useReactFlow();
+  const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
   const [writtenContent, setWrittenContent] = useState<string>('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [mapTitle, setMapTitle] = useState<string>('Untitled Mind Map');
   const [previousTitle, setPreviousTitle] = useState<string>('Untitled Mind Map');
+  const [layoutOnNextRender, setLayoutOnNextRender] = useState(false);
 
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -253,6 +264,8 @@ function MindMapContent() {
   const [isWriteLoading, setIsWriteLoading] = useState(false);
   const { toast } = useToast();
 
+  const [searchTerm, setSearchTerm] = useState('');
+
   const handleTitleBlur = () => {
     if (mapTitle.trim() === '') {
       setMapTitle(previousTitle);
@@ -261,7 +274,6 @@ function MindMapContent() {
     }
   };
 
-  // Handler for when the map title changes
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setMapTitle(e.target.value);
   };
@@ -333,68 +345,92 @@ function MindMapContent() {
     const newEdgesMap = new Map<string, Edge>();
     const nodeMap = new Map<string, Node<CustomNodeData>>();
     const levelMap = new Map<number, Node<CustomNodeData>[]>();
-    
-    // First pass: Create nodes and build the node map
+
+    // Generate a unique prefix to avoid ID conflicts
+    const uniquePrefix = `audio-${Date.now()}-`;
+    const existingNodeIds = new Set(nodes.map((node) => node.id));
+    const idMap = new Map<string, string>();
+
+    // First pass: Create new IDs and build idMap
     backendNodes.forEach((node) => {
+      const oldId = node.id;
+      let newId = uniquePrefix + oldId;
+
+      // Ensure the new ID is unique among existing node IDs
+      while (existingNodeIds.has(newId)) {
+        newId = uniquePrefix + oldId + '-' + Math.random().toString(36).substr(2, 9);
+      }
+
+      idMap.set(oldId, newId);
+      existingNodeIds.add(newId);
+    });
+
+    // Second pass: Create nodes with new IDs and update parents/children
+    backendNodes.forEach((node) => {
+      const newId = idMap.get(node.id)!;
+
       const parents = node.parents
         ? node.parents
             .split(',')
             .map((id: string) => id.trim())
             .filter((id: string) => id.length > 0)
+            .map((id: string) => idMap.get(id) || id)
         : [];
+
       const children = node.children
         ? node.children
             .split(',')
             .map((id: string) => id.trim())
             .filter((id: string) => id.length > 0)
+            .map((id: string) => idMap.get(id) || id)
         : [];
-  
+
       const reactFlowNode: Node<CustomNodeData> = {
-        id: node.id,
+        id: newId,
         type: 'customNode',
         data: {
           title: node.title,
           content: node.content,
           parents,
           children,
-          depth: 0, // Will be calculated in the next pass
+          depth: 0,
         },
         position: { x: 0, y: 0 },
       };
       newNodes.push(reactFlowNode);
-      nodeMap.set(node.id, reactFlowNode);
+      nodeMap.set(newId, reactFlowNode);
     });
-  
+
     // Second pass: Create edges and calculate depths
     newNodes.forEach((node) => {
       const { id, data } = node;
-      
+
       // Calculate node depth based on longest path from root
       const calculateDepth = (nodeId: string, visited = new Set<string>()): number => {
         if (visited.has(nodeId)) return 0;
         visited.add(nodeId);
-        
+
         const currentNode = nodeMap.get(nodeId);
         if (!currentNode) return 0;
-        
+
         if (currentNode.data.parents.length === 0) return 0;
-        
-        const parentDepths = currentNode.data.parents.map(parentId => 
+
+        const parentDepths = currentNode.data.parents.map((parentId) =>
           calculateDepth(parentId, visited)
         );
-        
+
         return 1 + Math.max(...parentDepths, 0);
       };
-  
+
       const depth = calculateDepth(id);
       node.data.depth = depth;
-      
+
       // Group nodes by their depth level
       if (!levelMap.has(depth)) {
         levelMap.set(depth, []);
       }
       levelMap.get(depth)?.push(node);
-  
+
       // Create edges
       data.parents.forEach((parentId) => {
         const edgeId = `e${parentId}-${id}`;
@@ -407,46 +443,7 @@ function MindMapContent() {
         }
       });
     });
-  
-    // Position nodes based on their depth and relative position within their level
-    const NODE_HORIZONTAL_SPACING = 300; // Space between nodes at the same level
-    const NODE_VERTICAL_SPACING = 150;   // Space between levels
-    const START_X = 100;                 // Starting X position
-    const START_Y = 100;                 // Starting Y position
-  
-    levelMap.forEach((nodes, level) => {
-      const levelWidth = nodes.length * NODE_HORIZONTAL_SPACING;
-      nodes.forEach((node, index) => {
-        // Center nodes horizontally within their level
-        const x = START_X + (index * NODE_HORIZONTAL_SPACING) - (levelWidth / 2) + (NODE_HORIZONTAL_SPACING / 2);
-        const y = START_Y + (level * NODE_VERTICAL_SPACING);
-        
-        node.position = { x, y };
-      });
-    });
-  
-    // Apply slight position adjustments to minimize edge crossings
-    const optimizePositions = () => {
-      levelMap.forEach((nodes) => {
-        nodes.forEach((node) => {
-          if (node.data.parents.length > 0) {
-            // Calculate the average X position of parents
-            const parentXPositions = node.data.parents
-              .map(parentId => nodeMap.get(parentId)?.position.x ?? 0);
-            const avgParentX = parentXPositions.reduce((a, b) => a + b, 0) / parentXPositions.length;
-            
-            // Move node slightly towards average parent position to reduce edge crossings
-            node.position.x = node.position.x * 0.7 + avgParentX * 0.3;
-          }
-        });
-      });
-    };
-  
-    // Run position optimization multiple times for better results
-    for (let i = 0; i < 3; i++) {
-      optimizePositions();
-    }
-  
+
     const newEdges = Array.from(newEdgesMap.values());
     return { newNodes, newEdges };
   };
@@ -476,14 +473,26 @@ function MindMapContent() {
       setNodes((nds) => [...nds, ...newNodes]);
       setEdges((eds) => [...eds, ...newEdges]);
       setIsRecordingLoading(false);
+
+      setLayoutOnNextRender(true);
     } catch (err) {
       console.error('Error uploading audio:', err);
     }
   };
 
+  useEffect(() => {
+    if (layoutOnNextRender) {
+      onLayout();
+      setLayoutOnNextRender(false);
+    }
+  }, [nodes, layoutOnNextRender]);
+
   const onConnect = useCallback(
     (params: Edge | Connection) => {
-      setEdges((eds) => addEdge(params, eds));
+      const newEdge = {
+        ...params,
+      };
+      setEdges((eds) => addEdge(newEdge, eds));
       if (params.source && params.target) {
         setNodes((nds) =>
           nds.map((node) => {
@@ -507,9 +516,71 @@ function MindMapContent() {
     [setEdges, setNodes]
   );
 
-  const onSelectionChange = useCallback((elements: { nodes: Node[]; edges: Edge[] }) => {
-    setSelectedNodes(elements.nodes.map((node) => node.id));
-  }, []);
+  useOnSelectionChange({
+    onChange: ({ nodes }) => {
+      setSelectedNodes(nodes.map((node) => node.id));
+    },
+  });
+
+  const onAddNode = useCallback(() => {
+    const newNode: Node<CustomNodeData> = {
+      id: `node-${Date.now()}`,
+      type: 'customNode',
+      data: { title: 'New Node', content: '', parents: [], children: [], depth: 0 },
+      position: { x: Math.random() * 500, y: Math.random() * 500 },
+    };
+    setNodes((nds) => [...nds, newNode]);
+  }, [setNodes]);
+
+  const onLayout = useCallback(() => {
+    if (!reactFlowInstance.current) return;
+
+    const nodeElements = reactFlowInstance.current.getNodes();
+    const edgeElements = reactFlowInstance.current.getEdges();
+
+    const dagreGraph = new dagre.graphlib.Graph();
+    dagreGraph.setDefaultEdgeLabel(() => ({}));
+    dagreGraph.setGraph({ rankdir: 'TB' });
+
+    // Add nodes to the dagre graph and get their actual dimensions
+    nodeElements.forEach((node) => {
+      const nodeElement = document.querySelector(`[data-id="${node.id}"]`);
+      if (nodeElement) {
+        const { width, height } = nodeElement.getBoundingClientRect();
+        dagreGraph.setNode(node.id, { width, height });
+      } else {
+        // Fallback to default dimensions if the node element is not found
+        dagreGraph.setNode(node.id, { width: 172, height: 36 });
+      }
+    });
+
+    // Add edges to the dagre graph
+    edgeElements.forEach((edge) => {
+      dagreGraph.setEdge(edge.source, edge.target);
+    });
+
+    // Use dagre to calculate the layout
+    dagre.layout(dagreGraph);
+
+    // Update node positions based on the dagre layout
+    const newNodes = nodeElements.map((node) => {
+      const nodeWithPosition = dagreGraph.node(node.id);
+      return {
+        ...node,
+        position: {
+          x: nodeWithPosition.x - nodeWithPosition.width / 2,
+          y: nodeWithPosition.y - nodeWithPosition.height / 2,
+        },
+      };
+    });
+
+    setNodes(newNodes);
+
+    // Center the view on the new layout
+    window.requestAnimationFrame(() => {
+      fitView({ padding: 0.2, maxZoom: 0.8 });
+    });
+  }, [setNodes, fitView]);
 
   const handleSuggest = useCallback(async () => {
     if (selectedNodes.length === 0) {
@@ -596,6 +667,9 @@ function MindMapContent() {
         title: "Suggestion added",
         description: "A new node has been created based on your selection.",
       });
+
+      // Call the auto layout function after adding the new node
+      setLayoutOnNextRender(true);
     } catch (err) {
       console.error('Error getting suggestion:', err);
       toast({
@@ -606,7 +680,7 @@ function MindMapContent() {
     } finally {
       setIsSuggestLoading(false);
     }
-  }, [selectedNodes, nodes, setNodes, setEdges, toast]);
+  }, [selectedNodes, nodes, setNodes, setEdges, toast, onLayout]);
 
   const handleWrite = useCallback(async () => {
     setIsWriteLoading(true);
@@ -648,20 +722,66 @@ function MindMapContent() {
     }
   }, [nodes, toast]);
 
+
+  const handleSearch = useCallback(() => {
+    if (!searchTerm) return;
+
+    const matchingNodes = nodes.filter((node) =>
+      node.data.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      node.data.content.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (matchingNodes.length > 0) {
+      const firstMatch = matchingNodes[0];
+      setCenter(firstMatch.position.x, firstMatch.position.y, { zoom: 1.5, duration: 1000 });
+
+      // Highlight matching nodes
+      setNodes((nds) =>
+        nds.map((node) => ({
+          ...node,
+          data: {
+            ...node.data,
+            isHighlighted: matchingNodes.some((n) => n.id === node.id),
+          },
+        }))
+      );
+
+      // Remove highlight after 3 seconds with fade-away effect
+      setTimeout(() => {
+        setNodes((nds) =>
+          nds.map((node) => ({
+            ...node,
+            data: {
+              ...node.data,
+              isHighlighted: false,
+            },
+          }))
+        );
+      }, 3000);
+    } else {
+      toast({
+        title: "No matches found",
+        description: "Try a different search term.",
+        variant: "destructive",
+      });
+    }
+  }, [searchTerm, nodes, setCenter, setNodes, toast]);
+
+  const onInit = useCallback((instance: ReactFlowInstance) => {
+    reactFlowInstance.current = instance;
+
+    // Adjust the initial fitView options
+    instance.fitView({ padding: 0.2, maxZoom: 0.8 });
+  }, []);
+
   return (
     <SidebarProvider>
       <AppSidebar />
       <div className="w-full h-screen flex flex-col">
         {/* Top Bar */}
         <div className="relative flex items-center justify-between p-4 bg-background border-b">
-          {/* Left Side (Empty or can be used for future icons) */}
           <SidebarTrigger className="w-10 h-10" variant={'outline'}/>
-
-          {/* Center: Editable Map Title */}
-          <div
-            className="absolute left-1/2 transform -translate-x-1/2"
-            style={{ maxWidth: 'calc(100%)' }} // Adjust to prevent overlap
-          >
+          <div className="absolute left-1/2 transform -translate-x-1/2" style={{ maxWidth: 'calc(100%)' }}>
             <Input
               className="text-center text-lg font-bold bg-transparent border-none outline-none p-0 m-0"
               style={{
@@ -676,17 +796,11 @@ function MindMapContent() {
               value={mapTitle}
               onChange={handleTitleChange}
               onBlur={handleTitleBlur}
-              title={mapTitle} // Shows full title on hover
+              title={mapTitle}
             />
           </div>
-
-          {/* Right Side: Buttons */}
           <div className="flex gap-2">
-            <Button
-              onClick={handleRecording}
-              disabled={isRecordingLoading}
-              className="relative overflow-hidden"
-            >
+            <Button onClick={handleRecording} disabled={isRecordingLoading} className="relative overflow-hidden">
               {isRecordingLoading ? (
                 <div className="absolute inset-0 flex items-center justify-center bg-primary">
                   <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin"></div>
@@ -703,8 +817,7 @@ function MindMapContent() {
                 </>
               )}
             </Button>
-            <Button
-              onClick={handleSuggest}
+            <Button onClick={handleSuggest}
               disabled={selectedNodes.length === 0 || isSuggestLoading}
               className="relative overflow-hidden"
             >
@@ -719,11 +832,7 @@ function MindMapContent() {
                 </>
               )}
             </Button>
-            <Button
-              onClick={handleWrite}
-              disabled={isWriteLoading}
-              className="relative overflow-hidden"
-            >
+            <Button onClick={handleWrite} disabled={isWriteLoading} className="relative overflow-hidden">
               {isWriteLoading ? (
                 <div className="absolute inset-0 flex items-center justify-center bg-primary">
                   <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin"></div>
@@ -745,13 +854,40 @@ function MindMapContent() {
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
-              onSelectionChange={onSelectionChange}
               nodeTypes={nodeTypes}
               proOptions={{ hideAttribution: true }}
+              onInit={onInit}
             >
               <Controls />
               <Background />
               <MiniMap position="bottom-right" />
+              <Panel position="top-right">
+                <div className="flex gap-2 items-center">
+                <div className="relative w-full">
+                  <Input
+                    type="text"
+                    placeholder="Search nodes..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleSearch();
+                      }
+                    }}
+                    className="pr-10 w-full"
+                  />
+                  <Button
+                    onClick={handleSearch}
+                    className="absolute inset-y-0 right-0 px-2 items-center text-secondary bg-primary"
+                    variant="outline"
+                  >
+                    <Search className="h-4 w-4" />
+                  </Button>
+                </div>
+                <Button onClick={onAddNode}>Add Node</Button>
+                <Button onClick={onLayout}>Auto Layout</Button>
+                </div>
+              </Panel>
             </ReactFlow>
           </div>
           <div
