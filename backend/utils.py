@@ -3,9 +3,9 @@ import json
 import re
 from typing import List, Dict
 from openai import OpenAI
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
-load_dotenv()
+# load_dotenv()
 
 # Initialize client
 client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))

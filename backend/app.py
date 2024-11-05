@@ -5,9 +5,9 @@ import os
 from openai import OpenAI
 import json
 from utils import transcribe_audio, generate_nodes_from_transcription, synthesize_idea, send_to_openai, extract_and_parse_json
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
-load_dotenv()
+# load_dotenv()
 
 app = Flask(__name__)
 cors = CORS(app)
