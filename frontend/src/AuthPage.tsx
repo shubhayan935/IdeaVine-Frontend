@@ -1,3 +1,5 @@
+// AuthPage.tsx
+
 'use client';
 
 import React, { useState } from 'react';
@@ -21,7 +23,7 @@ import {
   User,
   ArrowRight,
   Eye,
-  EyeOff,
+  EyeOff
 } from 'lucide-react';
 import { useSignIn, useSignUp, useClerk } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
@@ -67,6 +69,7 @@ export default function AuthPage() {
     setVerificationCode('');
     setIsVerifying(false);
     setSuccessfulReset(false);
+    setSecondFactor(false);
     setLoginPasswordVisible(false);
     setSignupPasswordVisible(false);
     setResetPasswordVisible(false);
@@ -485,6 +488,16 @@ export default function AuthPage() {
                           Sign In
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
+                        {/* Google Sign-In Button */}
+                        <Button
+                          type="button"
+                          onClick={() => signIn.create({ strategy: 'oauth_google' })}
+                          variant="outline"
+                          className="w-full flex items-center justify-center gap-2 mt-4"
+                        >
+                          <img src="/google-logo.svg" className="h-4 w-4" />
+                          Sign in with Google
+                        </Button>
                       </div>
                     </form>
                   )}
@@ -580,6 +593,16 @@ export default function AuthPage() {
                         >
                           Sign Up
                           <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                        {/* Google Sign-Up Button */}
+                        <Button
+                          type="button"
+                          onClick={() => signUp.create({ strategy: 'oauth_google' })}
+                          variant="outline"
+                          className="w-full flex items-center justify-center gap-2 mt-4"
+                        >
+                          <img src="/google-logo.svg" className="h-4 w-4" />
+                          Sign up with Google
                         </Button>
                       </div>
                     </form>
