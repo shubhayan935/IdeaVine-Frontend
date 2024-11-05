@@ -5,6 +5,7 @@ import { Search, LogOut, Plus, Leaf, Calendar, Clock, Settings, Palette } from "
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { cn } from "@/lib/utils"
 import {
   Sidebar,
@@ -27,6 +28,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useClerk, useUser } from '@clerk/clerk-react' // Import useUser
+import { useNavigate } from 'react-router-dom'
 
 // Sample mindmap history data
 const mindmapHistory = [
@@ -49,7 +52,7 @@ interface ThemeOption {
 const themeOptions: ThemeOption[] = [
   { name: 'light', primaryColor: '#ffffff', secondaryColor: '#000000', label: 'Light' },
   { name: 'dark', primaryColor: '#1a1a1a', secondaryColor: '#ffffff', label: 'Dark' },
-  { name: 'beige', primaryColor: '#8b4513', secondaryColor: '#f5f5dc', label: 'Beige' },
+  { name: 'beige', primaryColor: '#f5f5dc', secondaryColor: '#8b4513', label: 'Beige' },
   { name: 'lavender', primaryColor: '#e6e6fa', secondaryColor: '#000000', label: 'Lavender' },
 ]
 
@@ -61,6 +64,10 @@ export function AppSidebar() {
   const filteredHistory = mindmapHistory.filter(item =>
     item.title.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const { signOut } = useClerk() // Destructure signOut from useClerk
+  const navigate = useNavigate()
+  const { user, isLoaded: isUserLoaded, isSignedIn } = useUser() // Use useUser hook
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -78,6 +85,37 @@ export function AppSidebar() {
     document.documentElement.classList.add(theme)
     localStorage.setItem('theme', theme)
   }, [theme])
+
+  // Implement the handleLogout function
+  const handleLogout = async () => {
+    try {
+      await signOut() // Sign out the user
+      console.log("User logged out:", user?.primaryEmailAddress?.emailAddress || "Unknown") // Optional: Log the email
+      navigate('/') // Redirect to the landing page
+    } catch (error) {
+      console.error("Error logging out:", error)
+      // Optionally, display an error message to the user
+    }
+  }
+
+  // Function to derive user initials
+  const getUserInitials = () => {
+    if (!isUserLoaded || !isSignedIn || !user) return "U"
+
+    const firstName = user.firstName || ""
+    const lastName = user.lastName || ""
+
+    const firstInitial = firstName.charAt(0).toUpperCase()
+    const lastInitial = lastName.charAt(0).toUpperCase()
+
+    if (firstInitial && lastInitial) {
+      return `${firstInitial}${lastInitial}`
+    } else if (firstInitial) {
+      return firstInitial
+    } else {
+      return "U" // Default fallback
+    }
+  }
 
   return (
     <Sidebar className="border-r border-border/50 shadow-sm transition-colors duration-300">
@@ -331,12 +369,36 @@ export function AppSidebar() {
               className="w-full justify-start gap-3 bg-background hover:bg-muted px-4 py-3 h-auto shadow-sm"
             >
               <Avatar className="h-8 w-8">
-                <AvatarImage src="/avatars/user.png" alt="User" />
-                <AvatarFallback>U</AvatarFallback>
+                {isUserLoaded && isSignedIn && user ? (
+                  <>
+                    {/* Conditionally render AvatarImage if user has an avatar URL */}
+                    {user.imageUrl ? (
+                      <AvatarImage src={user.imageUrl} alt="User" />
+                    ) : (
+                      <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                    )}
+                  </>
+                ) : (
+                  <AvatarFallback>U</AvatarFallback>
+                )}
               </Avatar>
               <div className="flex flex-col items-start">
-                <span className="text-sm font-medium">John Doe</span>
-                <span className="text-xs text-muted-foreground">john@example.com</span>
+                {isUserLoaded && isSignedIn && user ? (
+                  <>
+                    <span className="text-sm font-medium">
+                      {user.firstName}
+                      {user.lastName ? ` ${user.lastName}` : ''}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {user.primaryEmailAddress?.emailAddress || 'user@example.com'}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-sm font-medium">Guest</span>
+                    <span className="text-xs text-muted-foreground">guest@example.com</span>
+                  </>
+                )}
               </div>
             </Button>
           </DropdownMenuTrigger>
@@ -347,7 +409,10 @@ export function AppSidebar() {
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive cursor-pointer" onClick={() => console.log("Logging out...")}>
+            <DropdownMenuItem 
+              className="text-destructive cursor-pointer flex items-center" 
+              onClick={handleLogout} // Attach handleLogout here
+            >
               <LogOut className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>

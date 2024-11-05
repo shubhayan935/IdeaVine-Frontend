@@ -1,9 +1,12 @@
+// LandingPage.tsx
+
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence, useAnimation } from 'framer-motion'
 import { Link as ScrollLink, Element } from 'react-scroll'
 import { Button } from "@/components/ui/button"
+import { useUser, SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
 import { Input } from "@/components/ui/input"
 import { Leaf, Brain, Zap, PenTool, Mic, Lightbulb, ChevronRight, Check } from 'lucide-react'
 import ReactFlow, { Background, Controls, Node, Edge } from 'reactflow'
@@ -153,7 +156,7 @@ function LandingPageContent() {
           proOptions={{ hideAttribution: true }}
         >
           <Background
-            color={theme === 'dark' ? '#555' : '#999'}
+            color={theme === 'dark' ? '#666' : '#000'}
             gap={16}
             size={1}
           />
@@ -206,11 +209,20 @@ function LandingPageContent() {
             </div>
             <div className="flex items-center space-x-4">
               <ThemeToggle />
-              <Link to="/auth">
-                <Button size="sm" className="rounded-full">
+              <SignedOut>
+                <Button size="sm" className="rounded-full" onClick={() => navigate('/auth/sign-in')}>
+                  Sign In
+                </Button>
+                <Button size="sm" variant="outline" className="rounded-full" onClick={() => navigate('/auth/sign-up')}>
                   Sign Up
                 </Button>
-              </Link>
+              </SignedOut>
+              <SignedIn>
+                <Button size="sm" className="rounded-full" onClick={() => navigate('/mindmap')}>
+                  Open Mind Maps
+                </Button>
+                <UserButton />
+              </SignedIn>
             </div>
           </div>
         </div>
@@ -452,7 +464,10 @@ function LandingPageContent() {
               <Leaf className="h-8 w-8 text-primary" />
               <span className="ml-2 text-xl font-semibold">IdeaVine</span>
             </div>
-            <nav className="mt-4 flex space-x-4 sm:mt-0">
+              <span className="text-muted-foreground">
+                An <a href="https://www.linkedin.com/in/shubhayan935" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">ss</a> and <a href="https://www.linkedin.com/in/vishnu-swarup-kadaba/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">vk</a> production
+              </span>
+            <nav className="mt-4 flex items-center space-x-4 sm:mt-0">
               <a href="#" className="text-muted-foreground hover:text-foreground">Privacy</a>
               <a href="#" className="text-muted-foreground hover:text-foreground">Terms</a>
               <a href="#" className="text-muted-foreground hover:text-foreground">Contact</a>
