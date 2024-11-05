@@ -409,7 +409,7 @@ function MindMapContent() {
     const newNode: Node<CustomNodeData> = {
       id: `node-${Date.now()}`,
       type: 'customNode',
-      data: { title: 'New Node', content: '', parents: [], children: [], depth: 0 },
+      data: { title: 'New Node', content: 'Double Click to edit', parents: [], children: [], depth: 0 },
       position: { x: Math.random() * 500, y: Math.random() * 500 },
     };
     setNodes((nds) => [...nds, newNode]);
