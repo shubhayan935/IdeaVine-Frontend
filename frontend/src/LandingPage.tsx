@@ -156,7 +156,7 @@ function LandingPageContent() {
           proOptions={{ hideAttribution: true }}
         >
           <Background
-            color={theme === 'dark' ? '#999' : '#000'}
+            color={theme === 'dark' ? '#666' : '#000'}
             gap={16}
             size={1}
           />
