@@ -1,3 +1,5 @@
+# app.py
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import tempfile
@@ -141,8 +143,8 @@ def delete_user(email):
     except Exception as e:
         return jsonify({'error': f'An error occurred: {str(e)}'}), 500
 
-@app.route('/users/lookup', methods=['GET'])
-def get_user(email):
+@app.route('/users/lookup', methods=['POST','GET'])
+def get_user():
     """Get user details by email.
     
     Parameters:
@@ -174,7 +176,9 @@ def get_user(email):
     500: {"error": "An error occurred: {error_message}"}
     """
     try:
+        data = request.get_json()
         # First get user to check if exists and get user_uid
+        email = data['email']
         user = UserDB.get_user_by_email(email)
         if not user:
             return jsonify({'error': 'User not found'}), 404
@@ -203,7 +207,7 @@ def create_mindmap():
     {
         # Required fields
         "mindmap_id": "uuid_mindmap-timestamp",  # Required: Format must be uuid_mindmap-timestamp
-        "user_uid": "user-uuid",                 # Required: Valid user UUID
+        "user_email": "user-email",                 # Required: Valid user UUID
         "title": "My Mindmap",                   # Required: String
         
         # Optional fields
@@ -236,30 +240,30 @@ def create_mindmap():
     """
     try:
         data = request.get_json()
-        
         # Validate required fields
-        required_fields = ['mindmap_id', 'user_uid', 'title']
+        required_fields = ['mindmap_id', 'user_email', 'title']
         for field in required_fields:
             if field not in data:
                 return jsonify({'error': f'Missing required field: {field}'}), 400
                 
         # Validate mindmap_id format
-        if not validate_mindmap_id(data['mindmap_id']):
-            return jsonify({'error': 'Invalid mindmap_id format'}), 400
+        # if not validate_mindmap_id(data['mindmap_id']):
+        #     return jsonify({'error': 'Invalid mindmap_id format'}), 400
             
         # Check if user exists
-        user = UserDB.get_user(data['user_uid'])
+        user = UserDB.get_user_by_email(data['user_email'])
         if not user:
             return jsonify({'error': 'User not found'}), 404
             
         # Create mindmap
         mindmap_id = MindMapDB.create_mindmap(
             mindmap_id=data['mindmap_id'],
-            user_uid=data['user_uid'],
+            user_uid=user['_id'],
             title=data['title'],
             description=data.get('description', ''),
             tags=data.get('tags', [])
         )
+
         
         # Create nodes if provided
         created_nodes = []
@@ -267,7 +271,7 @@ def create_mindmap():
             for node_data in data['nodes']:
                 node_id = NodeDB.create_node(
                     mindmap_id=mindmap_id,
-                    user_uid=data['user_uid'],
+                    user_uid=user['_id'],
                     title=node_data['title'],
                     content=node_data['content'],
                     position=node_data['position'],
@@ -280,10 +284,11 @@ def create_mindmap():
         MindMapDB.update_mindmap_stats(mindmap_id)
         
         # Update user stats
-        UserDB.update_user_stats(data['user_uid'])
+        UserDB.update_user_stats(user['_id'])
         
         # Get fresh mindmap data
         mindmap = mindmaps.find_one({"_id": mindmap_id})
+
         
         # Convert datetime objects
         for key in ['created_at', 'updated_at', 'last_accessed']:
@@ -368,13 +373,20 @@ def update_mindmap(mindmap_id):
     """
     try:
         data = request.get_json()
-        
+        print(f"\n\n\n\n\nahahhahahah\n\n\n\n\n\n{mindmap_id, data}\n\n\n\n")
+
+
+        # Rewrite this function - data is all the nodes in the mindmap, updating every 10 seconds. Just upsert all the nodes (so delete or add or update).
+
+
+
         # Check if mindmap exists
         mindmap = mindmaps.find_one({"_id": mindmap_id, "is_deleted": False})
         if not mindmap:
             return jsonify({'error': 'Mindmap not found'}), 404
-            
+        
         user_uid = mindmap['user_uid']
+        print(user_uid)
         
         # Update mindmap basic info if provided
         update_fields = {}
@@ -405,7 +417,7 @@ def update_mindmap(mindmap_id):
                     title=node_data['title'],
                     content=node_data['content'],
                     position=node_data['position'],
-                    parents=node_data.get('parents', [])
+                    parents=node_data['parents'],
                 )
                 new_node = nodes.find_one({"_id": node_id})
                 new_node['created_at'] = new_node['created_at'].isoformat()
@@ -416,8 +428,8 @@ def update_mindmap(mindmap_id):
         if 'nodes_to_update' in data:
             for node_data in data['nodes_to_update']:
                 node_id = node_data['node_id']
-                if not validate_node_id(node_id, mindmap_id):
-                    return jsonify({'error': f'Invalid node_id format: {node_id}'}), 400
+                # if not validate_node_id(node_id, mindmap_id):
+                #     return jsonify({'error': f'Invalid node_id format: {node_id}'}), 400
                     
                 update_fields = {}
                 for field in ['title', 'content', 'position', 'parents']:
@@ -444,8 +456,10 @@ def update_mindmap(mindmap_id):
                 response_data['deleted'].append(node_id)
                 
         # Update stats
+
         MindMapDB.update_mindmap_stats(mindmap_id)
         UserDB.update_user_stats(user_uid)
+
         
         # Get fresh mindmap data
         mindmap = mindmaps.find_one({"_id": mindmap_id})

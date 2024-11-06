@@ -2,8 +2,17 @@
 
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { Search, LogOut, Plus, Leaf, Calendar, Palette, Settings } from "lucide-react";
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  Search,
+  LogOut,
+  Plus,
+  Leaf,
+  Calendar,
+  Palette,
+  Settings,
+  Ellipsis,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
@@ -29,10 +38,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useClerk } from '@clerk/clerk-react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useUserInfo } from './context/UserContext'; // Correct import
-import { v4 as uuidv4 } from 'uuid'; // Import UUID
+import { useClerk } from "@clerk/clerk-react";
+import { useNavigate, Link } from "react-router-dom";
+import { useUserInfo } from "./context/UserContext"; // Correct import
+import { v4 as uuidv4 } from "uuid"; // Import UUID
 
 // Define the Mindmap interface based on backend response
 interface Mindmap {
@@ -51,7 +60,7 @@ interface Mindmap {
 }
 
 // Define Theme types
-type Theme = 'light' | 'dark' | 'beige' | 'lavender' | 'pink';
+type Theme = "light" | "dark" | "beige" | "lavender" | "pink";
 
 interface ThemeOption {
   name: Theme;
@@ -61,65 +70,91 @@ interface ThemeOption {
 }
 
 const themeOptions: ThemeOption[] = [
-  { name: 'light', primaryColor: '#ffffff', secondaryColor: '#000000', label: 'Light' },
-  { name: 'dark', primaryColor: '#1a1a1a', secondaryColor: '#ffffff', label: 'Dark' },
-  { name: 'beige', primaryColor: '#f5f5dc', secondaryColor: '#8b4513', label: 'Beige' },
-  { name: 'lavender', primaryColor: '#e6e6fa', secondaryColor: '#000000', label: 'Lavender' },
+  {
+    name: "light",
+    primaryColor: "#ffffff",
+    secondaryColor: "#000000",
+    label: "Light",
+  },
+  {
+    name: "dark",
+    primaryColor: "#1a1a1a",
+    secondaryColor: "#ffffff",
+    label: "Dark",
+  },
+  {
+    name: "beige",
+    primaryColor: "#f5f5dc",
+    secondaryColor: "#8b4513",
+    label: "Beige",
+  },
+  {
+    name: "lavender",
+    primaryColor: "#e6e6fa",
+    secondaryColor: "#000000",
+    label: "Lavender",
+  },
 ];
 
 export function AppSidebar() {
   // State for active mindmap item
   const [activeItem, setActiveItem] = useState<string | null>(null);
-  
+
   // State for search term
   const [searchTerm, setSearchTerm] = useState("");
-  
+
   // State for theme management
-  const [theme, setTheme] = useState<Theme>('light');
+  const [theme, setTheme] = useState<Theme>("light");
 
   // State to hold fetched mindmaps
   const [mindmaps, setMindmaps] = useState<Mindmap[]>([]);
-  
+
   // State for loading and error handling
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Destructure signOut from useClerk
   const { signOut } = useClerk();
-  
+
   // Initialize navigate for routing
   const navigate = useNavigate();
-  
+
   // Use useUserInfo hook to get user info
   const { userEmail, firstName, lastName } = useUserInfo();
-  console.log(userEmail, firstName, lastName);
 
   // Function to derive user initials for AvatarFallback
   const getUserInitials = () => {
     if (!userEmail) return "U";
 
     // Optionally, use firstName and lastName for initials
-    const initials = `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
+    const initials = `${firstName?.charAt(0) || ""}${
+      lastName?.charAt(0) || ""
+    }`.toUpperCase();
     return initials || "U";
   };
 
   // Effect to load saved theme or system preference on component mount
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedTheme = localStorage.getItem('theme') as Theme;
-      if (savedTheme && themeOptions.some(option => option.name === savedTheme)) {
+    if (typeof window !== "undefined") {
+      const savedTheme = localStorage.getItem("theme") as Theme;
+      if (
+        savedTheme &&
+        themeOptions.some((option) => option.name === savedTheme)
+      ) {
         setTheme(savedTheme);
-      } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        setTheme('dark');
+      } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        setTheme("dark");
       }
     }
   }, []);
 
   // Effect to apply theme changes to the document and localStorage
   useEffect(() => {
-    document.documentElement.classList.remove(...themeOptions.map(option => option.name));
+    document.documentElement.classList.remove(
+      ...themeOptions.map((option) => option.name)
+    );
     document.documentElement.classList.add(theme);
-    localStorage.setItem('theme', theme);
+    localStorage.setItem("theme", theme);
   }, [theme]);
 
   // Handle user logout
@@ -127,7 +162,7 @@ export function AppSidebar() {
     try {
       await signOut(); // Sign out the user
       console.log("User logged out:", userEmail || "Unknown"); // Optional: Log the email
-      navigate('/'); // Redirect to the landing page
+      navigate("/"); // Redirect to the landing page
     } catch (error) {
       console.error("Error logging out:", error);
       // Optionally, display an error message to the user
@@ -137,11 +172,11 @@ export function AppSidebar() {
   // Function to create a new mindmap
   const handleCreateMindmap = async () => {
     if (!userEmail) {
-      console.log('creating a new mindmap, FAILED.')
+      console.log("creating a new mindmap, FAILED.");
       return;
     }
 
-    const mindmap_id = `uuid_mindmap-${Date.now()}`; // Format: uuid_mindmap-timestamp
+    const mindmap_id = `${Date.now()}`; // Format: uuid_mindmap-timestamp
     const title = "Untitled Mindmap"; // Default title, can be modified
     const description = ""; // Default description
     const tags: string[] = []; // Default tags
@@ -160,10 +195,10 @@ export function AppSidebar() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://127.0.0.1:5000/mindmaps', {
-        method: 'POST',
+      const response = await fetch("http://127.0.0.1:5000/mindmaps", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           // Include authentication headers if required by backend
           // 'Authorization': `Bearer ${token}`
         },
@@ -172,11 +207,11 @@ export function AppSidebar() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create mindmap');
+        throw new Error(errorData.error || "Failed to create mindmap");
       }
 
       const data = await response.json();
-      console.log('Mindmap created successfully:', data);
+      console.log("Mindmap created successfully:", data);
 
       // Optionally, you can add the new mindmap to the state
       setMindmaps((prevMindmaps) => [...prevMindmaps, data.mindmap]);
@@ -185,7 +220,7 @@ export function AppSidebar() {
       navigate(`/mindmap/${mindmap_id}`);
     } catch (err: any) {
       console.error("Error creating mindmap:", err);
-      setError(err.message || 'An error occurred while creating mindmap');
+      setError(err.message || "An error occurred while creating mindmap");
     } finally {
       setLoading(false);
     }
@@ -201,9 +236,9 @@ export function AppSidebar() {
 
       try {
         const response = await fetch(`http://127.0.0.1:5000/users/lookup`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             // Include authentication headers if required by backend
             // 'Authorization': `Bearer ${token}`
           },
@@ -212,7 +247,7 @@ export function AppSidebar() {
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to fetch user UID');
+          throw new Error(errorData.error || "Failed to fetch user UID");
         }
 
         const data = await response.json();
@@ -222,33 +257,36 @@ export function AppSidebar() {
         await fetchMindmapsByUid(userUid);
       } catch (err: any) {
         console.error("Error fetching user UID:", err);
-        setError(err.message || 'An error occurred while fetching user UID');
+        setError(err.message || "An error occurred while fetching user UID");
         setLoading(false);
       }
     };
 
     const fetchMindmapsByUid = async (userUid: string) => {
       try {
-        const response = await fetch(`http://127.0.0.1:5000/users/${userUid}/mindmaps`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            // Include authentication headers if required by backend
-            // 'Authorization': `Bearer ${token}`
-          },
-        });
+        const response = await fetch(
+          `http://127.0.0.1:5000/users/${userUid}/mindmaps`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              // Include authentication headers if required by backend
+              // 'Authorization': `Bearer ${token}`
+            },
+          }
+        );
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || 'Failed to fetch mindmaps');
+          throw new Error(errorData.error || "Failed to fetch mindmaps");
         }
 
         const data = await response.json();
         setMindmaps(data.mindmaps);
-        console.log('Fetched mindmaps:', data.mindmaps);
+        console.log("Fetched mindmaps:", data.mindmaps);
       } catch (err: any) {
         console.error("Error fetching mindmaps:", err);
-        setError(err.message || 'An error occurred while fetching mindmaps');
+        setError(err.message || "An error occurred while fetching mindmaps");
       } finally {
         setLoading(false);
       }
@@ -258,7 +296,7 @@ export function AppSidebar() {
   }, [userEmail]);
 
   // Filtered mindmaps based on search term
-  const filteredMindmaps = mindmaps.filter(item =>
+  const filteredMindmaps = mindmaps.filter((item) =>
     item.title.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -269,14 +307,28 @@ export function AppSidebar() {
         :root {
           --background-transition-duration: 300ms;
         }
-        
-        *, *::before, *::after {
-          transition: background-color var(--background-transition-duration) ease,
-                      border-color var(--background-transition-duration) ease;
+
+        *,
+        *::before,
+        *::after {
+          transition: background-color var(--background-transition-duration)
+              ease,
+            border-color var(--background-transition-duration) ease;
         }
 
         /* Exclude text elements from color transition */
-        h1, h2, h3, h4, h5, h6, p, span, a, button, input, textarea {
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6,
+        p,
+        span,
+        a,
+        button,
+        input,
+        textarea {
           transition: none;
         }
 
@@ -392,7 +444,9 @@ export function AppSidebar() {
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary shadow-sm">
               <Leaf className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-semibold text-xl tracking-tight">IdeaVine</span>
+            <span className="font-semibold text-xl tracking-tight">
+              IdeaVine
+            </span>
           </div>
           {/* Theme Selector Dropdown */}
           <DropdownMenu>
@@ -406,13 +460,15 @@ export function AppSidebar() {
                 <span className="sr-only">Select theme</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent 
-              align="end" 
-              side="right" 
-              sideOffset={22} 
+            <DropdownMenuContent
+              align="end"
+              side="right"
+              sideOffset={22}
               className="w-56 shadow-lg"
             >
-              <DropdownMenuLabel className="text-sm font-medium">Choose theme</DropdownMenuLabel>
+              <DropdownMenuLabel className="text-sm font-medium">
+                Choose theme
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {themeOptions.map((option) => (
                 <DropdownMenuItem
@@ -439,15 +495,15 @@ export function AppSidebar() {
           </DropdownMenu>
         </div>
       </SidebarHeader>
-      
+
       {/* Sidebar Content */}
       <SidebarContent>
         <ScrollArea className="h-[calc(100vh-8rem)] py-6">
           <div className="space-y-6">
             {/* New Mind Map Button */}
             <div className="px-4">
-              <Button 
-                className="w-full justify-center gap-2 shadow-sm hover:shadow" 
+              <Button
+                className="w-full justify-center gap-2 shadow-sm hover:shadow"
                 size="lg"
                 onClick={handleCreateMindmap} // Updated handler
                 disabled={loading} // Disable while loading
@@ -456,7 +512,7 @@ export function AppSidebar() {
                 {loading ? "Creating..." : "New Mind Map"}
               </Button>
             </div>
-            
+
             {/* Search and Recent Mind Maps */}
             <SidebarGroup>
               {/* Search Input */}
@@ -472,21 +528,27 @@ export function AppSidebar() {
                   />
                 </div>
               </div>
-              
+
               {/* Recent Mind Maps Label */}
               <SidebarGroupLabel className="px-4 text-sm font-medium text-foreground/70">
                 Recent Mind Maps
               </SidebarGroupLabel>
-              
+
               {/* Recent Mind Maps Content */}
               <SidebarGroupContent className="px-2">
                 {/* Loading State */}
                 {loading ? (
-                  <div className="px-4 py-2 text-sm text-muted-foreground">Loading...</div>
+                  <div className="px-4 py-2 text-sm text-muted-foreground">
+                    Loading...
+                  </div>
                 ) : error ? (
-                  <div className="px-4 py-2 text-sm text-destructive">{error}</div>
+                  <div className="px-4 py-2 text-sm text-destructive">
+                    {error}
+                  </div>
                 ) : filteredMindmaps.length === 0 ? (
-                  <div className="px-4 py-2 text-sm text-muted-foreground">No mindmaps found.</div>
+                  <div className="px-4 py-2 text-sm text-muted-foreground">
+                    No mindmaps found.
+                  </div>
                 ) : (
                   <SidebarMenu>
                     {filteredMindmaps.map((item: Mindmap) => (
@@ -507,6 +569,7 @@ export function AppSidebar() {
                           >
                             <div className="flex items-center justify-between">
                               <span className="font-medium">{item.title}</span>
+                              {/* <Button><Ellipsis /></Button> */}
                             </div>
                             <div className="flex items-center gap-3 text-xs">
                               <div className="flex items-center gap-1.5">
@@ -517,7 +580,7 @@ export function AppSidebar() {
                               {item.metadata.tags.length > 0 && (
                                 <div className="flex items-center gap-1.5">
                                   <Leaf className="h-3.5 w-3.5" />
-                                  {item.metadata.tags.join(', ')}
+                                  {item.metadata.tags.join(", ")}
                                 </div>
                               )}
                             </div>
@@ -532,7 +595,7 @@ export function AppSidebar() {
           </div>
         </ScrollArea>
       </SidebarContent>
-      
+
       {/* Sidebar Footer with User Dropdown */}
       <SidebarFooter className="border-t border-border/50 p-4">
         <DropdownMenu>
@@ -562,7 +625,7 @@ export function AppSidebar() {
                 {userEmail ? (
                   <>
                     <span className="text-sm font-medium">
-                      {firstName ? `${firstName} ${lastName || ''}` : userEmail}
+                      {firstName ? `${firstName} ${lastName || ""}` : userEmail}
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {userEmail}
@@ -571,13 +634,15 @@ export function AppSidebar() {
                 ) : (
                   <>
                     <span className="text-sm font-medium">Guest</span>
-                    <span className="text-xs text-muted-foreground">guest@example.com</span>
+                    <span className="text-xs text-muted-foreground">
+                      guest@example.com
+                    </span>
                   </>
                 )}
               </div>
             </Button>
           </DropdownMenuTrigger>
-          
+
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
@@ -585,8 +650,8 @@ export function AppSidebar() {
               <Settings className="mr-2 h-4 w-4" />
               Settings
             </DropdownMenuItem>
-            <DropdownMenuItem 
-              className="text-destructive cursor-pointer flex items-center" 
+            <DropdownMenuItem
+              className="text-destructive cursor-pointer flex items-center"
               onClick={handleLogout} // Attach handleLogout here
             >
               <LogOut className="mr-2 h-4 w-4" />

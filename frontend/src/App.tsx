@@ -13,29 +13,52 @@ export default function App() {
     <Router>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/auth/*" element={<AuthPage />} />
+        <Route path="/auth/*" element={
+          <RequireAuthForAuth>
+            <AuthPage />
+          </RequireAuthForAuth>
+        }/>
+        {/* Protected Routes */}
         <Route
-          path="/mindmap" // Dynamic route for individual mindmaps
+          path="/mindmap/:mindmap_id"
           element={
-            <RequireAuth>
+            <RequireAuthForMindMap>
               <MindMap />
-            </RequireAuth>
+            </RequireAuthForMindMap>
+          }
+        />
+        <Route
+          path="/mindmap"
+          element={
+            <RequireAuthForMindMap>
+              <MindMap />
+            </RequireAuthForMindMap>
           }
         />
         {/* Redirect any unknown routes to home */}
-        {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Router>
   );
 }
 
 // Helper component to protect routes
-function RequireAuth({ children }: { children: JSX.Element }) {
+function RequireAuthForMindMap({ children }: { children: JSX.Element }) {
   const { userEmail } = useUserInfo();
 
   if (!userEmail) {
     // Redirect to the authentication page if not authenticated
     return <Navigate to="/auth/sign-in" replace />;
+  }
+  return children;
+}
+
+function RequireAuthForAuth({ children }: { children: JSX.Element }) {
+  const { userEmail } = useUserInfo();
+
+  if (userEmail) {
+    // Redirect to the authentication page if not authenticated
+    return <Navigate to="/" replace />;
   }
   return children;
 }
