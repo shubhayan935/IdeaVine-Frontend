@@ -1,6 +1,4 @@
-// MindMap.tsx
-
-'use client';
+// src/components/MindMap.tsx
 
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import dagre from 'dagre';
@@ -48,7 +46,8 @@ import {
 import { AppSidebar } from "./Sidebar";
 import debounce from 'lodash.debounce'; // Import debounce
 import { v4 as uuidv4 } from 'uuid'; // Import UUID for generating UID
-import { useUser } from '@clerk/clerk-react';
+import { useUserInfo } from './context/UserContext'; // Import useUserInfo
+import { useParams, useNavigate } from 'react-router-dom'; // Import useParams and useNavigate
 
 // Define the structure of your custom node data
 interface CustomNodeData {
@@ -98,6 +97,8 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
         return node;
       })
     );
+    // Save changes to backend if necessary
+    // You can emit an event or call a prop function to handle saving
   }, [id, nodeData, setNodes]);
 
   // Handle node deletion
@@ -114,6 +115,7 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
       }));
     });
     setEdges((eds) => eds.filter((edge) => edge.source !== id && edge.target !== id));
+    // Optionally, notify backend about deletion
   }, [id, setNodes, setEdges]);
 
   // Handle adding a new node in a specific direction
@@ -152,6 +154,8 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
           eds
         )
       );
+
+      // Optionally, notify backend about the new node
     },
     [id, getNode, setNodes, setEdges, data.depth]
   );
@@ -250,19 +254,19 @@ const nodeTypes = {
   customNode: CustomNode,
 };
 
-// Initial Nodes
+// Initial Nodes for Fallback
 const initialNodes: Node<CustomNodeData>[] = [
   {
     id: '1',
     type: 'customNode',
     data: { title: 'Main Idea', content: 'Start your mind map here', parents: [], children: [], depth: 0 },
-    position: { x: 0, y: 0 },
+    position: { x: 250, y: 250 }, // Centered position
   },
 ];
 
 // Main MindMapContent Component
 function MindMapContent() {
-  const [nodes, setNodes, onNodesChange] = useNodesState<CustomNodeData>(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState<CustomNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const { project, fitView, setCenter } = useReactFlow();
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
@@ -288,66 +292,159 @@ function MindMapContent() {
 
   const [mindmapUid, setMindmapUid] = useState<string>('');
 
-  const { user, isLoaded, isSignedIn } = useUser();
+  const { userEmail } = useUserInfo(); // Access userEmail from context
+  const { mindmap_id } = useParams<{ mindmap_id: string }>(); // Extract mindmap_id from URL
+  const navigate = useNavigate();
 
-  const userEmail = user.emailAddresses[0]?.emailAddress || '';
-
-  // Generate a unique UID when the component mounts
+  // Fetch mindmap data based on mindmap_id
   useEffect(() => {
-    const uid = uuidv4();
-    setMindmapUid(uid);
-    // Optionally, create the mindmap in the backend here if it's a new mindmap
-  }, []);
+    if (mindmap_id) {
+      const fetchMindmap = async () => {
+        try {
+        //   toast({
+        //     title: "Loading Mindmap",
+        //     description: "Fetching your mindmap data...",
+        //     duration: 2000,
+        //   });
+
+          console.log("Fetching your mindmap data...");
+          const response = await fetch(`http://127.0.0.1:5000/mindmaps/${mindmap_id}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              // Include authentication headers if required by backend
+              // 'Authorization': `Bearer ${token}`
+            },
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to fetch mindmap');
+          }
+
+          const data = await response.json();
+          const fetchedNodes: Node<CustomNodeData>[] = data.nodes.map((node: any) => ({
+            id: node.id,
+            type: 'customNode',
+            data: {
+              title: node.title,
+              content: node.content,
+              parents: node.parents,
+              children: node.children,
+              depth: node.depth,
+            },
+            position: node.position, // Ensure backend provides position
+          }));
+
+          const fetchedEdges: Edge[] = data.edges.map((edge: any) => ({
+            id: edge.id,
+            source: edge.source,
+            target: edge.target,
+            type: 'smoothstep', // or any other edge type
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+            },
+          }));
+
+          setNodes(fetchedNodes);
+          setEdges(fetchedEdges);
+          setMapTitle(data.title || 'Untitled Mind Map');
+          setPreviousTitle(data.title || 'Untitled Mind Map');
+
+          // Optionally, fit the view to the nodes
+          window.requestAnimationFrame(() => {
+            fitView({ padding: 0.2, maxZoom: 0.8 });
+          });
+
+          console.log('Fetched Mindmap:', data);
+        } catch (err: any) {
+          console.error("Error fetching mindmap:", err);
+          toast({
+            title: "Error",
+            description: err.message || "An error occurred while fetching the mindmap.",
+            variant: "destructive",
+          });
+        }
+      };
+
+      fetchMindmap();
+    } else {
+      // Fallback: Initialize with default nodes
+      setNodes(initialNodes);
+      setEdges([]);
+      setMapTitle('Untitled Mind Map');
+      setPreviousTitle('Untitled Mind Map');
+
+      // Optionally, fit the view to the default node
+      window.requestAnimationFrame(() => {
+        fitView({ padding: 0.2, maxZoom: 0.8 });
+      });
+
+      console.log('Loaded default mindmap');
+    }
+  }, [mindmap_id, setNodes, setEdges, fitView, toast, navigate]);
 
   // Define the updateMindmapDB function
   const updateMindmapDB = useCallback(async () => {
-    if (!mindmapUid) return; // Ensure UID is set
+    if (mindmap_id) {
+      try {
+        console.log("Updating Database for Mindmap ID: ", mindmap_id);
+        const response = await fetch(`http://127.0.0.1:5000/mindmaps/${mindmap_id}`, {
+          method: 'PUT', // Assuming PUT method for updating
+          headers: {
+            'Content-Type': 'application/json',
+            // Include authentication headers if required by backend
+            // 'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            title: mapTitle,
+            nodes: nodes.map((node) => ({
+              id: node.id,
+              title: node.data.title,
+              content: node.data.content,
+              position: node.position,
+              parents: node.data.parents,
+              children: node.data.children,
+              depth: node.data.depth,
+            })),
+            edges: edges.map((edge) => ({
+              id: edge.id,
+              source: edge.source,
+              target: edge.target,
+            })),
+          }),
+        });
 
-    try {
-      console.log("Updating Database for this Email: ", userEmail);
-      const response = await fetch('http://127.0.0.1:5000/mindmaps/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          uid: mindmapUid,
-          title: mapTitle,
-          user_email: userEmail,
-          nodes: nodes.map((node) => ({
-            id: node.id,
-            title: node.data.title,
-            content: node.data.content,
-            position: node.position,
-            parents: node.data.parents,
-            children: node.data.children,
-            depth: node.data.depth,
-          })),
-        }),
-      });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to update mindmap');
+        }
 
-      if (!response.ok) {
-        throw new Error(`Failed to update mindmap: ${response.statusText}`);
+        const data = await response.json();
+        console.log('Mindmap updated successfully:', data);
+
+        // Optionally, show a success toast
+        // toast({
+        //   title: "Mindmap Updated",
+        //   description: "Your mindmap has been successfully saved.",
+        // });
+      } catch (error: any) {
+        console.error(error);
+        // Optionally, show an error toast
+        // toast({
+        //   title: "Update Failed",
+        //   description: "There was an error saving your mindmap. Please try again.",
+        //   variant: "destructive",
+        // });
       }
-
-      const data = await response.json();
-      console.log('Mindmap updated successfully:', data);
-
-      // toast({
-      //   title: "Mindmap Updated",
-      //   description: "Your mindmap has been successfully saved.",
-      // });
-    } catch (error) {
-      console.error(error);
-      // toast({
-      //   title: "Update Failed",
-      //   description: "There was an error saving your mindmap. Please try again.",
-      //   variant: "destructive",
-      // });
+    } else {
+      // Handle case where mindmap_id is not present
+      // For example, you might want to auto-create a mindmap or prompt the user
+      console.log("No mindmap_id provided. Skipping update.");
     }
-  }, [mindmapUid, mapTitle, nodes, toast]);
+  }, [mindmap_id, mapTitle, nodes, edges, toast]);
 
-  // Debounced version of updateMindmapDB
+  // Debounced version of updateMindmapDB to prevent excessive API calls
   const debouncedUpdateMindmapDB = useCallback(
     debounce(() => {
       updateMindmapDB();
@@ -357,7 +454,7 @@ function MindMapContent() {
 
   // useEffect to watch for changes in nodes and title
   useEffect(() => {
-    if (mindmapUid && user) { // Ensure UID is set
+    if (mindmap_id && userEmail) { // Ensure mindmap_id and userEmail are set
       debouncedUpdateMindmapDB();
 
       // Cleanup function to cancel debounce on unmount or when dependencies change
@@ -365,7 +462,7 @@ function MindMapContent() {
         debouncedUpdateMindmapDB.cancel();
       };
     }
-  }, [nodes, mapTitle, debouncedUpdateMindmapDB, mindmapUid]);
+  }, [nodes, edges, mapTitle, debouncedUpdateMindmapDB, mindmap_id, userEmail]);
 
   // Handle node connections
   const onConnect = useCallback(
@@ -567,7 +664,7 @@ function MindMapContent() {
     } finally {
       setIsSuggestLoading(false);
     }
-  }, [selectedNodes, nodes, setNodes, setEdges, toast, onLayout]);
+  }, [selectedNodes, nodes, setNodes, setEdges, toast]);
 
   // Handle writing/generating an essay from the mind map
   const handleWrite = useCallback(async () => {
@@ -741,6 +838,11 @@ function MindMapContent() {
 
       if (!response.ok) {
         console.error('Failed to upload audio');
+        toast({
+          title: "Audio Upload Failed",
+          description: "There was an error uploading your audio. Please try again.",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -1061,7 +1163,7 @@ function MindMapContent() {
   );
 }
 
-// Exported MindMap Component wrapped with ReactFlowProvider
+// Exported MindMap Component wrapped with ReactFlowProvider and React Router hooks
 export default function MindMap() {
   return (
     <div className="w-full h-full">

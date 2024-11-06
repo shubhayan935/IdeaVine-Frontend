@@ -1,9 +1,12 @@
+// src/App.tsx
+
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { ClerkProvider, SignedIn, SignedOut, useUser, UserButton } from "@clerk/clerk-react";
+import { ClerkProvider } from "@clerk/clerk-react";
 import LandingPage from "./LandingPage";
 import AuthPage from "./AuthPage";
 import MindMap from "./MindMap";
+import { useUserInfo } from './context/UserContext';
 
 export default function App() {
   return (
@@ -12,13 +15,15 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/auth/*" element={<AuthPage />} />
         <Route
-          path="/mindmap"
+          path="/mindmap" // Dynamic route for individual mindmaps
           element={
             <RequireAuth>
               <MindMap />
             </RequireAuth>
           }
         />
+        {/* Redirect any unknown routes to home */}
+        {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
       </Routes>
     </Router>
   );
@@ -26,10 +31,10 @@ export default function App() {
 
 // Helper component to protect routes
 function RequireAuth({ children }: { children: JSX.Element }) {
-  const { isSignedIn } = useUser();
+  const { userEmail } = useUserInfo();
 
-  if (!isSignedIn) {
-    // Redirect to the authentication page
+  if (!userEmail) {
+    // Redirect to the authentication page if not authenticated
     return <Navigate to="/auth/sign-in" replace />;
   }
   return children;

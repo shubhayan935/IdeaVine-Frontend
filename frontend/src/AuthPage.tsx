@@ -206,6 +206,10 @@ export default function AuthPage() {
       if (completeSignUp.status === 'complete') {
         await setActiveSignUp({ session: completeSignUp.createdSessionId! });
         console.log(`User signed up: ${emailAddress}`); // Log email on successful sign-up
+        
+        // After successful sign-up and email verification, create the user in MongoDB
+        await createUserInBackend();
+
         navigate('/mindmap');
       } else {
         console.log(completeSignUp);
@@ -218,6 +222,47 @@ export default function AuthPage() {
           ? err.errors.map((error: any) => error.longMessage)
           : ['An error occurred during verification.']
       );
+    }
+  };
+
+  // Function to create user in MongoDB via backend
+  const createUserInBackend = async () => {
+    try {
+      // Retrieve the Clerk user ID
+      const clerkUserId = signUp.createdUserId;
+      if (!clerkUserId) {
+        throw new Error('Clerk user ID not found.');
+      }
+
+      // Prepare user data
+      const userData = {
+        email: emailAddress,
+        firstName,
+        lastName,
+        clerkId: clerkUserId,
+      };
+
+      // Make POST request to backend to create user in MongoDB
+      const response = await fetch('http://127.0.0.1:5000/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Include authentication headers if your backend requires them
+          // 'Authorization': `Bearer YOUR_BACKEND_AUTH_TOKEN`
+        },
+        body: JSON.stringify(userData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create user in backend.');
+      }
+
+      const data = await response.json();
+      console.log('User created in backend:', data);
+    } catch (error: any) {
+      console.error('Error creating user in backend:', error);
+      setErrors([error.message || 'An error occurred while creating your account.']);
     }
   };
 
@@ -495,7 +540,7 @@ export default function AuthPage() {
                           variant="outline"
                           className="w-full flex items-center justify-center gap-2 mt-4"
                         >
-                          <img src="/google-logo.svg" className="h-4 w-4" />
+                          <img src="/google-logo.svg" className="h-4 w-4" alt="Google Logo" />
                           Sign in with Google
                         </Button>
                       </div>
@@ -601,7 +646,7 @@ export default function AuthPage() {
                           variant="outline"
                           className="w-full flex items-center justify-center gap-2 mt-4"
                         >
-                          <img src="/google-logo.svg" className="h-4 w-4" />
+                          <img src="/google-logo.svg" className="h-4 w-4" alt="Google Logo" />
                           Sign up with Google
                         </Button>
                       </div>
