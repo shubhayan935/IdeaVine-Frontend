@@ -189,8 +189,8 @@ class MindMapDB:
     @staticmethod
     def create_mindmap(mindmap_id: str, user_uid: str, title: str, description: str = "", tags: list = None) -> str:
         """Create a new mindmap"""
-        if not validate_mindmap_id(mindmap_id):
-            raise ValueError("Invalid mindmap_id format")
+        # if not validate_mindmap_id(mindmap_id):
+        #     raise ValueError("Invalid mindmap_id format")
             
         # Check if mindmap_id already exists
         if mindmaps.find_one({"_id": mindmap_id}):
@@ -246,6 +246,7 @@ class MindMapDB:
 class NodeDB:
     @staticmethod
     def create_node(
+        _id: str,
         mindmap_id: str,
         user_uid: str,
         title: str,
@@ -257,17 +258,17 @@ class NodeDB:
     ) -> str:
         """Create a new node"""
         # Validate mindmap_id
-        if not validate_mindmap_id(mindmap_id):
-            raise ValueError("Invalid mindmap_id format")
+        # if not validate_mindmap_id(mindmap_id):
+        #     raise ValueError("Invalid mindmap_id format")
             
         # Create node_id
-        node_id = generate_node_id(mindmap_id)
+        node_id = _id if _id else generate_node_id(mindmap_id)
         
         # Validate parent nodes if provided
-        if parents:
-            for parent_id in parents:
-                if not validate_node_id(parent_id, mindmap_id):
-                    raise ValueError(f"Invalid parent node ID: {parent_id}")
+        # if parents:
+        #     for parent_id in parents:
+        #         # if not validate_node_id(parent_id, mindmap_id):
+        #         #     raise ValueError(f"Invalid parent node ID: {parent_id}")
         
         node = {
             "_id": node_id,
@@ -304,16 +305,16 @@ class NodeDB:
         
         # Validate and update parents
         if parents is not None:
-            for parent_id in parents:
-                if not validate_node_id(parent_id, node["mindmap_id"]):
-                    raise ValueError(f"Invalid parent node ID: {parent_id}")
+            # for parent_id in parents:
+            #     if not validate_node_id(parent_id, node["mindmap_id"]):
+            #         raise ValueError(f"Invalid parent node ID: {parent_id}")
             update_data["parents"] = parents
             
         # Validate and update children
         if children is not None:
-            for child_id in children:
-                if not validate_node_id(child_id, node["mindmap_id"]):
-                    raise ValueError(f"Invalid child node ID: {child_id}")
+            # for child_id in children:
+            #     if not validate_node_id(child_id, node["mindmap_id"]):
+            #         raise ValueError(f"Invalid child node ID: {child_id}")
             update_data["children"] = children
 
         nodes.update_one(

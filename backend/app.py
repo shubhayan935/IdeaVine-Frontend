@@ -245,7 +245,6 @@ def create_mindmap():
         for field in required_fields:
             if field not in data:
                 return jsonify({'error': f'Missing required field: {field}'}), 400
-                
         # Validate mindmap_id format
         # if not validate_mindmap_id(data['mindmap_id']):
         #     return jsonify({'error': 'Invalid mindmap_id format'}), 400
@@ -263,13 +262,13 @@ def create_mindmap():
             description=data.get('description', ''),
             tags=data.get('tags', [])
         )
-
         
         # Create nodes if provided
         created_nodes = []
         if 'nodes' in data:
             for node_data in data['nodes']:
                 node_id = NodeDB.create_node(
+                    _id=node_data['_id'],
                     mindmap_id=mindmap_id,
                     user_uid=user['_id'],
                     title=node_data['title'],
@@ -373,12 +372,6 @@ def update_mindmap(mindmap_id):
     """
     try:
         data = request.get_json()
-        print(f"\n\n\n\n\nahahhahahah\n\n\n\n\n\n{mindmap_id, data}\n\n\n\n")
-
-
-        # Rewrite this function - data is all the nodes in the mindmap, updating every 10 seconds. Just upsert all the nodes (so delete or add or update).
-
-
 
         # Check if mindmap exists
         mindmap = mindmaps.find_one({"_id": mindmap_id, "is_deleted": False})
@@ -386,7 +379,6 @@ def update_mindmap(mindmap_id):
             return jsonify({'error': 'Mindmap not found'}), 404
         
         user_uid = mindmap['user_uid']
-        print(user_uid)
         
         # Update mindmap basic info if provided
         update_fields = {}
@@ -412,6 +404,7 @@ def update_mindmap(mindmap_id):
         if 'nodes_to_add' in data:
             for node_data in data['nodes_to_add']:
                 node_id = NodeDB.create_node(
+                    _id = node_data['_id'],
                     mindmap_id=mindmap_id,
                     user_uid=user_uid,
                     title=node_data['title'],
@@ -450,8 +443,8 @@ def update_mindmap(mindmap_id):
         # Delete nodes
         if 'nodes_to_delete' in data:
             for node_id in data['nodes_to_delete']:
-                if not validate_node_id(node_id, mindmap_id):
-                    return jsonify({'error': f'Invalid node_id format: {node_id}'}), 400
+                # if not validate_node_id(node_id, mindmap_id):
+                #     return jsonify({'error': f'Invalid node_id format: {node_id}'}), 400
                 nodes.delete_one({"_id": node_id})
                 response_data['deleted'].append(node_id)
                 
