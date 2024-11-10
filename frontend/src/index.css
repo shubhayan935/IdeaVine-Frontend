@@ -161,6 +161,63 @@ button:focus-visible {
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
+
+  /* Beige theme */
+  .beige {
+    --background: 37 36% 90%;
+    --foreground: 24 70% 31%;
+    --card: 37 36% 90%;
+    --card-foreground: 24 70% 31%;
+    --popover: 37 36% 90%;
+    --popover-foreground: 24 70% 31%;
+    --primary: 24 70% 31%;
+    --primary-foreground: 37 36% 90%;
+    --secondary: 34 30% 85%;
+    --secondary-foreground: 24 70% 31%;
+    --muted: 34 30% 85%;
+    --muted-foreground: 24 40% 45%;
+    --accent: 34 30% 85%;
+    --accent-foreground: 24 70% 31%;
+    --destructive: 0 85% 60%;
+    --destructive-foreground: 37 36% 90%;
+    --border: 34 30% 80%;
+    --input: 34 30% 80%;
+    --ring: 24 70% 31%;
+  }
+
+  /* Lavender theme */
+  .lavender {
+    --background: 240 67% 94%;
+    --foreground: 0 0% 0%;
+    --card: 240 67% 94%;
+    --card-foreground: 0 0% 0%;
+    --popover: 240 67% 94%;
+    --popover-foreground: 0 0% 0%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 240 67% 94%;
+    --secondary: 240 30% 88%;
+    --secondary-foreground: 0 0% 0%;
+    --muted: 240 30% 88%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 240 30% 88%;
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 240 67% 94%;
+    --border: 240 30% 84%;
+    --input: 240 30% 84%;
+    --ring: 0 0% 0%;
+  }
+
+  /* Styles for ReactFlow nodes */
+  .react-flow__node {
+    background-color: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+  }
+
+  .react-flow__node-custom {
+    background-color: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+  }
 }
 
 @layer base {

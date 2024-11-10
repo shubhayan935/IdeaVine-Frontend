@@ -25,8 +25,9 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
-import { useSignIn, useSignUp, useClerk } from '@clerk/clerk-react';
+import { useSignIn, useSignUp, useClerk, GoogleOneTap } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
+import { v4 as uuidv4 } from "uuid"; // Import UUID
 
 export default function AuthPage() {
   // Define active tab: 'login', 'signup', or 'forgotPassword'
@@ -93,10 +94,8 @@ export default function AuthPage() {
 
         if (result.status === 'complete') {
           await setActiveSignIn({ session: result.createdSessionId });
-          console.log(`User logged in: ${emailAddress}`); // Log email on successful login
           navigate('/mindmap');
         } else {
-          console.log(result);
           setErrors(['Sign-in incomplete.']);
         }
       } catch (err: any) {
@@ -179,10 +178,7 @@ export default function AuthPage() {
         setErrors([]);
       } else if (result.status === 'complete') {
         await setActiveSignIn({ session: result.createdSessionId });
-        console.log(`Password reset for: ${emailAddress}`); // Log email on successful password reset
         navigate('/mindmap');
-      } else {
-        console.log(result);
       }
     } catch (err: any) {
       console.error('error', err.errors[0].longMessage);
@@ -205,14 +201,12 @@ export default function AuthPage() {
       });
       if (completeSignUp.status === 'complete') {
         await setActiveSignUp({ session: completeSignUp.createdSessionId! });
-        console.log(`User signed up: ${emailAddress}`); // Log email on successful sign-up
         
         // After successful sign-up and email verification, create the user in MongoDB
         await createUserInBackend();
 
         navigate('/mindmap');
       } else {
-        console.log(completeSignUp);
         setErrors(['Verification failed. Please try again.']);
       }
     } catch (err: any) {
@@ -259,10 +253,36 @@ export default function AuthPage() {
       }
 
       const data = await response.json();
-      console.log('User created in backend:', data);
+
+      await createBlankMindmap(emailAddress);
     } catch (error: any) {
       console.error('Error creating user in backend:', error);
       setErrors([error.message || 'An error occurred while creating your account.']);
+    }
+  };
+
+  const createBlankMindmap = async (userEmail: string) => {
+    const blankMindmap = {
+      mindmap_id: uuidv4(),
+      user_email: userEmail,
+      title: 'Untitled Mindmap',
+      description: 'Start your mind map here.',
+      nodes: [],
+    };
+
+    try {
+      const response = await fetch('http://127.0.0.1:5000/mindmaps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(blankMindmap),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create blank mindmap.');
+      }
+
+    } catch (error) {
+      console.error('Error creating blank mindmap:', error);
     }
   };
 
@@ -534,7 +554,7 @@ export default function AuthPage() {
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                         {/* Google Sign-In Button */}
-                        <Button
+                        {/* <Button
                           type="button"
                           onClick={() => signIn.create({ strategy: 'oauth_google' })}
                           variant="outline"
@@ -542,7 +562,7 @@ export default function AuthPage() {
                         >
                           <img src="/google-logo.svg" className="h-4 w-4" alt="Google Logo" />
                           Sign in with Google
-                        </Button>
+                        </Button> */}
                       </div>
                     </form>
                   )}
@@ -640,7 +660,7 @@ export default function AuthPage() {
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                         {/* Google Sign-Up Button */}
-                        <Button
+                        {/* <Button
                           type="button"
                           onClick={() => signUp.create({ strategy: 'oauth_google' })}
                           variant="outline"
@@ -648,7 +668,7 @@ export default function AuthPage() {
                         >
                           <img src="/google-logo.svg" className="h-4 w-4" alt="Google Logo" />
                           Sign up with Google
-                        </Button>
+                        </Button> */}
                       </div>
                     </form>
                   )}

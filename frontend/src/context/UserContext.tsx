@@ -26,7 +26,6 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     if (isLoaded && isSignedIn && user) {
-      console.log(user);
       const email = user.primaryEmailAddress?.emailAddress || null;
       setUserEmail(email);
       const fName = user.firstName || null;
