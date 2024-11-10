@@ -1,9 +1,12 @@
+// LandingPage.tsx
+
 'use client'
 
 import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence, useAnimation } from 'framer-motion'
 import { Link as ScrollLink, Element } from 'react-scroll'
 import { Button } from "@/components/ui/button"
+import { useUser, SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
 import { Input } from "@/components/ui/input"
 import { Leaf, Brain, Zap, PenTool, Mic, Lightbulb, ChevronRight, Check } from 'lucide-react'
 import ReactFlow, { Background, Controls, Node, Edge } from 'reactflow'
@@ -20,6 +23,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent } from "@/components/ui/card"
 import { Link, useNavigate } from 'react-router-dom'
+import { useUserInfo } from './context/UserContext'
 
 const initialNodes: Node[] = [
   { id: '1', position: { x: 0, y: 0 }, data: { label: 'Main Idea' }, type: 'input' },
@@ -100,6 +104,8 @@ function LandingPageContent() {
   const [nodes, setNodes] = useState(initialNodes)
   const [edges, setEdges] = useState(initialEdges)
 
+  const { userEmail } = useUserInfo();
+
   const validateEmail = (email: string) => {
     const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
     return re.test(String(email).toLowerCase())
@@ -114,7 +120,6 @@ function LandingPageContent() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (validateEmail(email)) {
-      console.log('Valid email submitted:', email)
       setIsSubmitted(true)
       // Here you would typically send the email to your backend
     } else {
@@ -141,6 +146,64 @@ function LandingPageContent() {
     [nodes]
   )
 
+  const fetchMindmaps = async () => {
+    if (!userEmail) return;
+
+    try {
+      const response = await fetch(`http://127.0.0.1:5000/users/lookup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Include authentication headers if required by backend
+          // 'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ email: userEmail }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch user UID");
+      }
+
+      const data = await response.json();
+      const userUid = data.user._id;
+
+      // After getting userUid, fetch mindmaps
+      await fetchMindmapsByUid(userUid);
+    } catch (err: any) {
+      console.error("Error fetching user UID:", err);
+    }
+  };
+
+  const fetchMindmapsByUid = async (userUid: string) => {
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:5000/users/${userUid}/mindmaps`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            // Include authentication headers if required by backend
+            // 'Authorization': `Bearer ${token}`
+          },
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to fetch mindmaps");
+      }
+
+      const data = await response.json();
+      const sortedMindmaps = data.mindmaps.sort(
+        (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      );
+      navigate(`/mindmap/${sortedMindmaps[0]._id}`);
+    } catch (err: any) {
+      console.error("Error fetching mindmaps:", err);
+  };
+}
+
   return (
     <div className={`min-h-screen bg-background text-foreground transition-colors duration-300 ${theme === 'dark' ? 'dark' : ''}`}>
       {/* Add the dotted background to the entire page */}
@@ -153,7 +216,7 @@ function LandingPageContent() {
           proOptions={{ hideAttribution: true }}
         >
           <Background
-            color={theme === 'dark' ? '#555' : '#999'}
+            color={theme === 'dark' ? '#666' : '#000'}
             gap={16}
             size={1}
           />
@@ -206,11 +269,20 @@ function LandingPageContent() {
             </div>
             <div className="flex items-center space-x-4">
               <ThemeToggle />
-              <Link to="/auth">
-                <Button size="sm" className="rounded-full">
+              <SignedOut>
+                <Button size="sm" className="rounded-full" onClick={() => navigate('/auth/sign-in')}>
+                  Sign In
+                </Button>
+                <Button size="sm" variant="outline" className="rounded-full" onClick={() => navigate('/auth/sign-up')}>
                   Sign Up
                 </Button>
-              </Link>
+              </SignedOut>
+              <SignedIn>
+                <Button size="sm" className="rounded-full" onClick={fetchMindmaps}>
+                  Open Mind Maps
+                </Button>
+                <UserButton />
+              </SignedIn>
             </div>
           </div>
         </div>
@@ -452,7 +524,10 @@ function LandingPageContent() {
               <Leaf className="h-8 w-8 text-primary" />
               <span className="ml-2 text-xl font-semibold">IdeaVine</span>
             </div>
-            <nav className="mt-4 flex space-x-4 sm:mt-0">
+              <span className="text-muted-foreground">
+                An <a href="https://www.linkedin.com/in/shubhayan935" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">ss</a> and <a href="https://www.linkedin.com/in/vishnu-swarup-kadaba/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">vk</a> production
+              </span>
+            <nav className="mt-4 flex items-center space-x-4 sm:mt-0">
               <a href="#" className="text-muted-foreground hover:text-foreground">Privacy</a>
               <a href="#" className="text-muted-foreground hover:text-foreground">Terms</a>
               <a href="#" className="text-muted-foreground hover:text-foreground">Contact</a>
