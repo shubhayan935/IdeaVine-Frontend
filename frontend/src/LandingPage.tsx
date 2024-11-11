@@ -2,7 +2,7 @@
 
 'use client'
 
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence, useAnimation } from 'framer-motion'
 import { Link as ScrollLink, Element } from 'react-scroll'
 import { Button } from "@/components/ui/button"
@@ -96,12 +96,12 @@ function LandingPageContent() {
   const [isEmailValid, setIsEmailValid] = useState(true)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const controls = useAnimation()
-  const [ref, inView] = useInView()
+  const [_, inView] = useInView()
   const [activeTab, setActiveTab] = useState('mindmap')
   const navigate = useNavigate()
   const { theme } = useTheme()
 
-  const [nodes, setNodes] = useState(initialNodes)
+  const [nodes] = useState(initialNodes)
   const [edges] = useState(initialEdges)
 
   const { userEmail } = useUserInfo();
@@ -132,19 +132,6 @@ function LandingPageContent() {
       controls.start('visible')
     }
   }, [controls, inView])
-
-  const onNodeDragStop = useCallback(
-    (node: Node) => {
-      const updatedNodes = nodes.map((n) => {
-        if (n.id === node.id) {
-          return node
-        }
-        return n
-      })
-      setNodes(updatedNodes)
-    },
-    [nodes]
-  )
 
   const fetchMindmaps = async () => {
     if (!userEmail) return;
@@ -320,7 +307,6 @@ function LandingPageContent() {
             <ReactFlow
               nodes={nodes}
               edges={edges}
-              onNodeDragStop={onNodeDragStop}
               fitView
               attributionPosition="bottom-left"
             >
