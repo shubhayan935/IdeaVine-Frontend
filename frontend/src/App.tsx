@@ -1,53 +1,68 @@
-'use client'
-
-import React, { useState } from 'react'
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom'
-import LandingPage from './LandingPage'
-import MindMap from './MindMap'
-import AuthPage from './AuthPage'
+import React from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { ClerkProvider } from "@clerk/clerk-react";
+import LandingPage from "./LandingPage";
+import AuthPage from "./AuthPage";
+import MindMap from "./MindMap";
+import { useUserInfo } from "./context/UserContext";
+import { SidebarUpdateProvider } from "./context/SidebarUpdateContext"; // Import SidebarUpdateProvider
 
 export default function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-
-  const handleLogin = () => {
-    // Implement your login logic here
-    setIsAuthenticated(true)
-  }
-
-  const handleSignup = () => {
-    // Implement your signup logic here
-    setIsAuthenticated(true)
-  }
-
-  const handleLogout = () => {
-    // Implement your logout logic here
-    setIsAuthenticated(false)
-  }
-
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route 
-          path="/auth" 
-          element={
-            <AuthPage 
-              onLogin={handleLogin} 
-              onSignup={handleSignup} 
+      <SidebarUpdateProvider>
+        <Router>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route
+              path="/auth/*"
+              element={
+                <RequireAuthForAuth>
+                  <AuthPage />
+                </RequireAuthForAuth>
+              }
             />
-          } 
-        />
-        <Route 
-          path="/mindmap" 
-          element={
-            isAuthenticated ? (
-              <MindMap onLogout={handleLogout} />
-            ) : (
-              <MindMap onLogout={handleLogout} />
-            )
-          } 
-        />
-      </Routes>
-    </Router>
-  )
+            {/* Protected Routes */}
+            <Route
+              path="/mindmap/:mindmap_id"
+              element={
+                <RequireAuthForMindMap>
+                  <MindMap />
+                </RequireAuthForMindMap>
+              }
+            />
+            <Route
+              path="/mindmap"
+              element={
+                <RequireAuthForMindMap>
+                  <MindMap />
+                </RequireAuthForMindMap>
+              }
+            />
+            {/* Redirect any unknown routes to home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
+      </SidebarUpdateProvider>
+  );
+}
+
+// Helper component to protect routes
+function RequireAuthForMindMap({ children }: { children: JSX.Element }) {
+  const { userEmail } = useUserInfo();
+
+  if (!userEmail) {
+    // Redirect to the authentication page if not authenticated
+    return <Navigate to="/auth/sign-in" replace />;
+  }
+  return children;
+}
+
+function RequireAuthForAuth({ children }: { children: JSX.Element }) {
+  const { userEmail } = useUserInfo();
+
+  if (userEmail) {
+    // Redirect to the home page if authenticated
+    return <Navigate to="/" replace />;
+  }
+  return children;
 }
