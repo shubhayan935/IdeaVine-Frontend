@@ -36,7 +36,6 @@ export const NodeOperationsProvider = ({
   children,
   nodes,
   setNodes,
-  edges,
   setEdges,
 }: NodeOperationsProviderProps) => {
   const { mindmap_id } = useParams<{ mindmap_id: string }>();
