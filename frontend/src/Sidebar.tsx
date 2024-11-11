@@ -1,12 +1,11 @@
 "use client";
 
-import React, { createContext, useState, useEffect, useCallback } from "react";
+import { createContext, useState, useEffect, useCallback } from "react";
 import {
   Search,
   LogOut,
   Plus,
   Leaf,
-  Calendar,
   Palette,
   Trash2,
   MoreVertical
@@ -27,7 +26,7 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,7 +38,6 @@ import {
 import { useClerk } from "@clerk/clerk-react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useUserInfo } from "./context/UserContext";
-import { useToast } from "@/hooks/use-toast";
 
 interface Mindmap {
   _id: string;
@@ -88,7 +86,6 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { userEmail, firstName, lastName } = useUserInfo();
   const { mindmap_id } = useParams<{ mindmap_id: string }>();
-  const { toast } = useToast();
 
   const updateSidebarTitle = useCallback(
     (mindmapId: string, newTitle: string) => {
@@ -130,11 +127,6 @@ export function AppSidebar() {
       navigate("/");
     } catch (error) {
       console.error("Error logging out:", error);
-      toast({
-        title: "Logout Failed",
-        description: "An error occurred while logging out. Please try again.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -170,18 +162,9 @@ export function AppSidebar() {
       setMindmaps((prevMindmaps) => [data.mindmap, ...prevMindmaps]);
       setActiveItem(newMindmapId);
       navigate(`/mindmap/${newMindmapId}`);
-      toast({
-        title: "Mindmap Created",
-        description: "Your new mindmap has been created successfully.",
-      });
     } catch (err: any) {
       console.error("Error creating mindmap:", err);
       setError(err.message || "An error occurred while creating mindmap");
-      toast({
-        title: "Create Mindmap Failed",
-        description: err.message || "An error occurred while creating the mindmap. Please try again.",
-        variant: "destructive",
-      });
     } finally {
       setLoading(false);
     }
@@ -191,7 +174,9 @@ export function AppSidebar() {
     const fetchActiveMindmap = async () => {
       if (!userEmail) return;
       try {
-        setActiveItem(mindmap_id);
+        if (mindmap_id){
+          setActiveItem(mindmap_id);
+        }
       } catch (err: any) {
         console.error("Error fetching active mindmap:", err);
         setError(err.message || "An error occurred while fetching the active mindmap.");
@@ -247,7 +232,7 @@ export function AppSidebar() {
 
         const data = await response.json();
         const sortedMindmaps = data.mindmaps.sort(
-          (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+          (a: { updated_at: string | number | Date; }, b: { updated_at: string | number | Date; }) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
         );
         setMindmaps(sortedMindmaps);
       } catch (err: any) {
@@ -286,18 +271,8 @@ export function AppSidebar() {
           await handleCreateMindmap();
         }
       }
-
-      toast({
-        title: "Mindmap Deleted",
-        description: "The mindmap has been successfully deleted.",
-      });
     } catch (err: any) {
       console.error("Error deleting mindmap:", err.message);
-      toast({
-        title: "Delete Failed",
-        description: err.message || "An error occurred while deleting the mindmap. Please try again.",
-        variant: "destructive",
-      });
     }
   };
 

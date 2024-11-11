@@ -1,6 +1,4 @@
-import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { ClerkProvider } from "@clerk/clerk-react";
 import LandingPage from "./LandingPage";
 import AuthPage from "./AuthPage";
 import MindMap from "./MindMap";
