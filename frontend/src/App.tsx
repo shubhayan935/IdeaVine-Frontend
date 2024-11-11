@@ -5,6 +5,7 @@ import MindMap from "./MindMap";
 import { useUserInfo } from "./context/UserContext";
 import { SidebarUpdateProvider } from "./context/SidebarUpdateContext"; // Import SidebarUpdateProvider
 
+
 export default function App() {
   return (
       <SidebarUpdateProvider>
