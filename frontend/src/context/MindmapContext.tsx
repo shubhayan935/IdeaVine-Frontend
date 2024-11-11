@@ -72,7 +72,7 @@ export const MindmapProvider: React.FC<MindmapProviderProps> = ({ children }) =>
       const userUid = data.user._id;
 
       // Fetch mindmaps by user UID
-      const mindmapsResponse = await fetch(`http://127.0.0.1:5000/users/${userUid}/mindmaps`, {
+      const mindmapsResponse = await fetch(`${BACKEND_API_URL}/users/${userUid}/mindmaps`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

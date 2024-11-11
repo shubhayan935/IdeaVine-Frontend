@@ -52,14 +52,13 @@ export const NodeOperationsProvider = ({
         if (!parentNode) {
           throw new Error('Parent node not found.');
         }
-
         const newNode: Node<CustomNodeData> = {
           id: newNodeId,
           type: 'customNode',
           data: {
             title: 'New Node',
             content: '',
-            parents: parentNode.data.parents.length > 0 ? parentNode.data.parents : [],
+            parents: [parentId],
             children: [],
             depth: parentNode.data.depth + 1,
           },

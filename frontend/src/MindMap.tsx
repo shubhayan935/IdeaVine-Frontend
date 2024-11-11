@@ -361,14 +361,13 @@ function MindMapContent() {
         if (!parentNode) {
           throw new Error('Parent node not found.');
         }
-
         const newNode: Node<CustomNodeData> = {
           id: newNodeId,
           type: 'customNode',
           data: {
             title: 'New Node',
-            content: '',
-            parents: parentNode.data.parents.length > 0 ? parentNode.data.parents : [],
+            content: 'Double click to edit',
+            parents: [parentNode.id],
             children: [],
             depth: parentNode.data.depth + 1,
           },
@@ -927,7 +926,7 @@ function MindMapContent() {
       });
 
       // Optionally, auto-layout after adding the new node
-      setLayoutOnNextRender(true);
+      // setLayoutOnNextRender(true);
     } catch (err: any) {
       console.error('Error getting suggestion:', err);
       toast({

@@ -282,8 +282,8 @@ export function AppSidebar() {
           setActiveItem(newActiveMap._id);
           navigate(`/mindmap/${newActiveMap._id}`);
         } else {
-          setActiveItem(null);
-          navigate('/');
+          // This is the last mindmap, create a new one
+          await handleCreateMindmap();
         }
       }
 
