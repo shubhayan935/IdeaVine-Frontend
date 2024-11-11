@@ -25,7 +25,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
-import { useSignIn, useSignUp, useClerk, GoogleOneTap } from '@clerk/clerk-react';
+import { useSignIn, useSignUp, useClerk } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from "uuid"; // Import UUID
 
@@ -42,7 +42,6 @@ export default function AuthPage() {
   const [errors, setErrors] = useState<string[]>([]);
   const [isVerifying, setIsVerifying] = useState(false);
   const [successfulReset, setSuccessfulReset] = useState(false);
-  const [secondFactor, setSecondFactor] = useState(false);
 
   // State variables for password visibility
   const [loginPasswordVisible, setLoginPasswordVisible] = useState(false);
@@ -56,7 +55,6 @@ export default function AuthPage() {
 
   const { isLoaded: isSignInLoaded, signIn, setActive: setActiveSignIn } = useSignIn();
   const { isLoaded: isSignUpLoaded, signUp, setActive: setActiveSignUp } = useSignUp();
-  const { client } = useClerk();
   const navigate = useNavigate();
 
   // Function to handle tab changes and reset relevant states
@@ -70,7 +68,6 @@ export default function AuthPage() {
     setVerificationCode('');
     setIsVerifying(false);
     setSuccessfulReset(false);
-    setSecondFactor(false);
     setLoginPasswordVisible(false);
     setSignupPasswordVisible(false);
     setResetPasswordVisible(false);
@@ -174,7 +171,6 @@ export default function AuthPage() {
       });
 
       if (result.status === 'needs_second_factor') {
-        setSecondFactor(true);
         setErrors([]);
       } else if (result.status === 'complete') {
         await setActiveSignIn({ session: result.createdSessionId });
@@ -223,7 +219,7 @@ export default function AuthPage() {
   const createUserInBackend = async () => {
     try {
       // Retrieve the Clerk user ID
-      const clerkUserId = signUp.createdUserId;
+      const clerkUserId = signUp?.createdUserId;
       if (!clerkUserId) {
         throw new Error('Clerk user ID not found.');
       }
@@ -251,8 +247,6 @@ export default function AuthPage() {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to create user in backend.');
       }
-
-      const data = await response.json();
 
       await createBlankMindmap(emailAddress);
     } catch (error: any) {
@@ -297,12 +291,6 @@ export default function AuthPage() {
     type: 'tween',
     ease: 'anticipate',
     duration: 0.5,
-  };
-
-  const springTransition = {
-    type: 'spring',
-    stiffness: 300,
-    damping: 30,
   };
 
   // Render verification form during email verification

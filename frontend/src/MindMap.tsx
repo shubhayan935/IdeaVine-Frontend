@@ -1,6 +1,6 @@
 // src/components/MindMap.tsx
 
-import React, { useEffect, useState, useCallback, useRef, useContext } from 'react';
+import { useEffect, useState, useCallback, useRef, useContext } from 'react';
 import dagre from 'dagre';
 import ReactFlow, {
   Node,
@@ -20,7 +20,6 @@ import ReactFlow, {
   useOnSelectionChange,
   Panel,
   ReactFlowInstance,
-  MarkerType,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Button } from "@/components/ui/button";
@@ -38,8 +37,6 @@ import {
   Search,
   Menu
 } from 'lucide-react';
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
 import {
   SidebarProvider,
   SidebarTrigger,
@@ -73,7 +70,7 @@ interface CustomNodeProps extends NodeProps {
 const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [nodeData, setNodeData] = useState<CustomNodeData>(data);
-  const { setNodes, setEdges, getNode  } = useReactFlow();
+  const { setNodes } = useReactFlow();
   const nodeRef = useRef<HTMLDivElement>(null);
 
   const nodeOperations = useContext(NodeOperationsContext);
@@ -230,7 +227,7 @@ const nodeTypes = {
 function MindMapContent() {
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const { fitView, setCenter, getNode, setNodes: reactFlowSetNodes, setEdges: reactFlowSetEdges } = useReactFlow();
+  const { fitView, setCenter, getNode } = useReactFlow();
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -249,8 +246,7 @@ function MindMapContent() {
   const [isRecordingLoading, setIsRecordingLoading] = useState(false);
   const [isSuggestLoading, setIsSuggestLoading] = useState(false);
   const [isWriteLoading, setIsWriteLoading] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
-  const { toast } = useToast();
+  const [isCreating] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -258,34 +254,29 @@ function MindMapContent() {
   const { mindmap_id } = useParams<{ mindmap_id: string }>(); // Extract mindmap_id from URL
   const navigate = useNavigate();
 
-  // Initialize Refs for node operations
-  const nodesToAddRef = useRef<any[]>([]);
-  const nodesToUpdateRef = useRef<any[]>([]);
-  const nodesToDeleteRef = useRef<string[]>([]);
-
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isMobile = useMediaQuery({ maxWidth: 768 });
   const isTablet = useMediaQuery({ minWidth: 769, maxWidth: 1024 });
 
   // Utility functions to manage node operations
-  const addNodeToAddList = (node: any) => {
-    nodesToAddRef.current.push(node);
-  };
+  // const addNodeToAddList = (node: any) => {
+  //   nodesToAddRef.current.push(node);
+  // };
 
-  const addNodeToUpdateList = (node: any) => {
-    // Prevent duplicate updates
-    nodesToUpdateRef.current = nodesToUpdateRef.current.filter(
-      (n) => n.node_id !== node.node_id
-    );
-    nodesToUpdateRef.current.push(node);
-  };
+  // const addNodeToUpdateList = (node: any) => {
+  //   // Prevent duplicate updates
+  //   nodesToUpdateRef.current = nodesToUpdateRef.current.filter(
+  //     (n) => n.node_id !== node.node_id
+  //   );
+  //   nodesToUpdateRef.current.push(node);
+  // };
 
-  const addNodeToDeleteList = (nodeId: string) => {
-    // Prevent duplicate deletions
-    if (!nodesToDeleteRef.current.includes(nodeId)) {
-      nodesToDeleteRef.current.push(nodeId);
-    }
-  };
+  // const addNodeToDeleteList = (nodeId: string) => {
+  //   // Prevent duplicate deletions
+  //   if (!nodesToDeleteRef.current.includes(nodeId)) {
+  //     nodesToDeleteRef.current.push(nodeId);
+  //   }
+  // };
 
   // Fetch or create mindmap based on URL
   useEffect(() => {
@@ -338,18 +329,13 @@ function MindMapContent() {
           });
         } catch (err: any) {
           console.error("Error fetching mindmap nodes:", err);
-          toast({
-            title: "Error",
-            description: err.message || "An error occurred while fetching the mindmap.",
-            variant: "destructive",
-          });
           navigate('/'); // Redirect to home or another appropriate page
         }
       }
     };
 
     fetchOrCreateMindmap();
-  }, [mindmap_id, isCreating, navigate, fitView, setNodes, setEdges, toast, userEmail]);
+  }, [mindmap_id, isCreating, navigate, fitView, setNodes, setEdges, userEmail]);
 
   // Add Node to Database
   const addNodeToDB = useCallback(
@@ -443,20 +429,11 @@ function MindMapContent() {
         //   throw new Error('Failed to add edge to the database.');
         // }
 
-        // toast({
-        //   title: "Node Added",
-        //   description: "A new node has been successfully added.",
-        // });
       } catch (error: any) {
         console.error("Error adding node:", error);
-        toast({
-          title: "Add Node Failed",
-          description: error.message || "There was an error adding the node. Please try again.",
-          variant: "destructive",
-        });
       }
     },
-    [getNode, mindmap_id, setNodes, setEdges, userEmail, toast]
+    [getNode, mindmap_id, setNodes, setEdges, userEmail]
   );
 
   // Update Node in Database
@@ -483,21 +460,11 @@ function MindMapContent() {
         if (!response.ok) {
           throw new Error('Failed to update node in the database.');
         }
-
-        toast({
-          title: "Node Updated",
-          description: "The node has been successfully updated.",
-        });
       } catch (error: any) {
         console.error("Error updating node:", error);
-        toast({
-          title: "Update Node Failed",
-          description: error.message || "There was an error updating the node. Please try again.",
-          variant: "destructive",
-        });
       }
     },
-    [mindmap_id, toast]
+    [mindmap_id]
   );
 
   // Delete Node from Database
@@ -519,25 +486,15 @@ function MindMapContent() {
 
         // Delete associated edges from frontend
         setEdges((eds) => eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
-
-        toast({
-          title: "Node Deleted",
-          description: "The node has been successfully deleted.",
-        });
       } catch (error: any) {
         console.error("Error deleting node:", error);
-        toast({
-          title: "Delete Node Failed",
-          description: error.message || "There was an error deleting the node. Please try again.",
-          variant: "destructive",
-        });
       }
     },
-    [mindmap_id, setEdges, toast]
+    [mindmap_id, setEdges]
   );
 
   const onNodesDelete = useCallback(
-    (deletedNodes) => {
+    (deletedNodes: any[]) => {
       // Delete each node from the database
       deletedNodes.forEach((node) => {
         deleteNodeFromDB(node.id);
@@ -547,7 +504,7 @@ function MindMapContent() {
   );
 
   const handleNodesChange = useCallback(
-    (changes) => {
+    (changes: any[]) => {
       changes.forEach((change) => {
         if (change.type === 'position') {
           // Update the node's position in the database if it was dragged
@@ -571,14 +528,6 @@ function MindMapContent() {
     [nodes, updateNodeInDB]
   );
 
-  // Add Node to Database - Event Handler
-  const handleAddNode = useCallback(
-    async (parentId: string, position: 'top' | 'bottom' | 'left' | 'right') => {
-      await addNodeToDB(parentId, position);
-    },
-    [addNodeToDB]
-  );
-
   // Update Mindmap Title in Database
   const updateMindmapTitle = useCallback( 
     async (title: string) => {
@@ -596,22 +545,14 @@ function MindMapContent() {
         }
 
         // Update the sidebar title via context
-        updateSidebarTitle(mindmap_id, title);
-
-        toast({
-          title: "Mindmap Updated",
-          description: "The mindmap title has been successfully updated.",
-        });
+        if (mindmap_id){
+          updateSidebarTitle(mindmap_id, title);
+        }
       } catch (error: any) {
         console.error("Error updating mindmap title:", error);
-        toast({
-          title: "Update Failed",
-          description: error.message || "There was an error updating the mindmap. Please try again.",
-          variant: "destructive",
-        });
       }
     },
-    [mindmap_id, toast, updateSidebarTitle]
+    [mindmap_id, updateSidebarTitle]
   );
 
   // Effect to update sidebar title immediately on mapTitle change
@@ -666,21 +607,11 @@ function MindMapContent() {
         if (!response.ok) {
           throw new Error('Failed to add edge to the database.');
         }
-
-        toast({
-          title: "Connection Added",
-          description: "A new connection has been successfully added.",
-        });
       } catch (error: any) {
         console.error("Error adding edge:", error);
-        toast({
-          title: "Add Edge Failed",
-          description: error.message || "There was an error adding the connection. Please try again.",
-          variant: "destructive",
-        });
       }
     },
-    [mindmap_id, setEdges, toast]
+    [mindmap_id, setEdges]
   );
 
   // Add a new node manually (e.g., via a button)
@@ -719,20 +650,10 @@ function MindMapContent() {
       if (!response.ok) {
         throw new Error('Failed to add node to the database.');
       }
-
-      toast({
-        title: "Node Added",
-        description: "A new node has been successfully added.",
-      });
     } catch (error: any) {
       console.error("Error adding node:", error);
-      toast({
-        title: "Add Node Failed",
-        description: error.message || "There was an error adding the node. Please try again.",
-        variant: "destructive",
-      });
     }
-  }, [mindmap_id, setNodes, userEmail, toast]);
+  }, [mindmap_id, setNodes, userEmail]);
 
   // Auto layout the mind map using Dagre
   const onLayout = useCallback(async () => {
@@ -788,21 +709,11 @@ function MindMapContent() {
     for (const node of newNodes) {
       await updateNodeInDB(node);
     }
-
-    toast({
-      title: "Layout Updated",
-      description: "The mindmap layout has been successfully updated.",
-    });
-  }, [fitView, setNodes, updateNodeInDB, toast]);
+  }, [fitView, setNodes, updateNodeInDB]);
 
   // Handle suggestions (e.g., AI-generated nodes)
   const handleSuggest = useCallback(async () => {
     if (selectedNodes.length === 0) {
-      toast({
-        title: "No Nodes Selected",
-        description: "Please select at least one node to get a suggestion.",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -920,24 +831,14 @@ function MindMapContent() {
       //   }
       // }
 
-      toast({
-        title: "Suggestion Added",
-        description: "A new node has been created based on your selection.",
-      });
-
       // Optionally, auto-layout after adding the new node
       // setLayoutOnNextRender(true);
     } catch (err: any) {
       console.error('Error getting suggestion:', err);
-      toast({
-        title: "Suggestion Failed",
-        description: "Unable to generate a suggestion. Please try again.",
-        variant: "destructive",
-      });
     } finally {
       setIsSuggestLoading(false);
     }
-  }, [selectedNodes, nodes, setNodes, setEdges, mindmap_id, userEmail, toast]);
+  }, [selectedNodes, nodes, setNodes, setEdges, mindmap_id, userEmail]);
 
   // Handle writing/generating an essay from the mind map
   const handleWrite = useCallback(async () => {
@@ -970,15 +871,10 @@ function MindMapContent() {
       setIsSidebarOpen(true);
     } catch (err) {
       console.error('Error generating essay:', err);
-      toast({
-        title: "Essay Generation Failed",
-        description: "Unable to generate the essay. Please try again.",
-        variant: "destructive",
-      });
     } finally {
       setIsWriteLoading(false);
     }
-  }, [nodes, toast]);
+  }, [nodes]);
 
   // Handle searching for nodes
   const handleSearch = useCallback(() => {
@@ -1017,13 +913,9 @@ function MindMapContent() {
         );
       }, 3000);
     } else {
-      toast({
-        title: "No Matches Found",
-        description: "Try a different search term.",
-        variant: "destructive",
-      });
+      return;
     }
-  }, [searchTerm, nodes, setCenter, setNodes, toast]);
+  }, [searchTerm, nodes, setCenter, setNodes]);
 
   // Initialize ReactFlow instance
   const onInit = useCallback((instance: ReactFlowInstance) => {
@@ -1069,18 +961,9 @@ function MindMapContent() {
       mediaRecorderRef.current.start();
       setIsRecording(true);
       setIsRecordingLoading(false);
-      toast({
-        title: "Recording Started",
-        description: "Your audio is now being recorded.",
-      });
     } catch (err) {
       console.error('Error accessing microphone:', err);
       setIsRecordingLoading(false);
-      toast({
-        title: "Recording Failed",
-        description: "Unable to access the microphone. Please check your permissions.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -1090,10 +973,6 @@ function MindMapContent() {
       setIsRecordingLoading(true);
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      toast({
-        title: "Recording Stopped",
-        description: "Your audio is being processed.",
-      });
     }
   };
 
@@ -1111,11 +990,6 @@ function MindMapContent() {
 
       if (!response.ok) {
         console.error('Failed to upload audio');
-        toast({
-          title: "Audio Upload Failed",
-          description: "There was an error uploading your audio. Please try again.",
-          variant: "destructive",
-        });
         return;
       }
 
@@ -1133,11 +1007,6 @@ function MindMapContent() {
     } catch (err) {
       console.error('Error uploading audio:', err);
       setIsRecordingLoading(false);
-      toast({
-        title: "Audio Upload Failed",
-        description: "There was an error uploading your audio. Please try again.",
-        variant: "destructive",
-      });
     }
   };
 
@@ -1236,11 +1105,6 @@ function MindMapContent() {
           }
         } catch (error: any) {
           console.error("Error adding backend node:", error);
-          toast({
-            title: "Add Node Failed",
-            description: error.message || "There was an error adding a node. Please try again.",
-            variant: "destructive",
-          });
         }
       });
 
@@ -1266,17 +1130,12 @@ function MindMapContent() {
       //     }
       //   } catch (error: any) {
       //     console.error("Error adding edge:", error);
-      //     toast({
-      //       title: "Add Edge Failed",
-      //       description: error.message || "There was an error adding an edge. Please try again.",
-      //       variant: "destructive",
-      //     });
       //   }
       // });
 
       return { newNodes, newEdges: derivedEdges };
     },
-    [nodes, mindmap_id, userEmail, toast]
+    [nodes, mindmap_id, userEmail]
   );
 
   // Auto layout trigger

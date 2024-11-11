@@ -6,9 +6,9 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence, useAnimation } from 'framer-motion'
 import { Link as ScrollLink, Element } from 'react-scroll'
 import { Button } from "@/components/ui/button"
-import { useUser, SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
+import { SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
 import { Input } from "@/components/ui/input"
-import { Leaf, Brain, Zap, PenTool, Mic, Lightbulb, ChevronRight, Check } from 'lucide-react'
+import { Leaf, Brain, Zap, PenTool, Mic, ChevronRight, Check } from 'lucide-react'
 import ReactFlow, { Background, Controls, Node, Edge } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { useInView } from 'react-intersection-observer'
@@ -21,8 +21,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Card, CardContent } from "@/components/ui/card"
-import { Link, useNavigate } from 'react-router-dom'
+import { Card } from "@/components/ui/card"
+import { useNavigate } from 'react-router-dom'
 import { useUserInfo } from './context/UserContext'
 
 const initialNodes: Node[] = [
@@ -102,7 +102,7 @@ function LandingPageContent() {
   const { theme } = useTheme()
 
   const [nodes, setNodes] = useState(initialNodes)
-  const [edges, setEdges] = useState(initialEdges)
+  const [edges] = useState(initialEdges)
 
   const { userEmail } = useUserInfo();
 
@@ -134,7 +134,7 @@ function LandingPageContent() {
   }, [controls, inView])
 
   const onNodeDragStop = useCallback(
-    (event: React.MouseEvent<Element, MouseEvent>, node: Node) => {
+    (node: Node) => {
       const updatedNodes = nodes.map((n) => {
         if (n.id === node.id) {
           return node
@@ -196,7 +196,7 @@ function LandingPageContent() {
 
       const data = await response.json();
       const sortedMindmaps = data.mindmaps.sort(
-        (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        (a: { updated_at: string | number | Date }, b: { updated_at: string | number | Date }) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
       );
       navigate(`/mindmap/${sortedMindmaps[0]._id}`);
     } catch (err: any) {
