@@ -1,19 +1,20 @@
 // src/contexts/NodeOperationsContext.tsx
 
 import React, { createContext, ReactNode, useCallback } from 'react';
-import { Node, Edge, addEdge } from 'reactflow';
+import { Node, Edge, addEdge, XYPosition } from 'reactflow';
 import { v4 as uuidv4 } from 'uuid';
-import { useToast } from "@/hooks/use-toast";
 import { useUserInfo } from '../context/UserContext';
 import { useParams } from 'react-router-dom';
 
 interface CustomNodeData {
+  id?: string;
   title: string;
   content: string;
   parents: string[];
   children: string[];
   depth: number;
   isHighlighted?: boolean;
+  position?: XYPosition | undefined;
 }
 
 interface NodeOperationsContextProps {
@@ -40,7 +41,6 @@ export const NodeOperationsProvider = ({
 }: NodeOperationsProviderProps) => {
   const { mindmap_id } = useParams<{ mindmap_id: string }>();
   const { userEmail } = useUserInfo();
-  const { toast } = useToast();
 
   const addNodeToDB = useCallback(
     async (parentId: string, position: 'top' | 'bottom' | 'left' | 'right') => {
@@ -115,14 +115,9 @@ export const NodeOperationsProvider = ({
 
       } catch (error: any) {
         console.error("Error adding node:", error);
-        toast({
-          title: "Add Node Failed",
-          description: error.message || "There was an error adding the node. Please try again.",
-          variant: "destructive",
-        });
       }
     },
-    [mindmap_id, nodes, setNodes, setEdges, userEmail, toast]
+    [mindmap_id, nodes, setNodes, setEdges, userEmail]
   );
 
   const updateNodeInDB = useCallback(
@@ -150,21 +145,11 @@ export const NodeOperationsProvider = ({
         if (!response.ok) {
           throw new Error('Failed to update node in the database.');
         }
-
-        toast({
-          title: "Node Updated",
-          description: "The node has been successfully updated.",
-        });
       } catch (error: any) {
         console.error("Error updating node:", error);
-        toast({
-          title: "Update Node Failed",
-          description: error.message || "There was an error updating the node. Please try again.",
-          variant: "destructive",
-        });
       }
     },
-    [mindmap_id, toast]
+    [mindmap_id]
   );
 
   const deleteNodeFromDB = useCallback(
@@ -184,21 +169,11 @@ export const NodeOperationsProvider = ({
 
         setNodes((nds) => nds.filter((node) => node.id !== nodeId));
         setEdges((eds) => eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
-
-        toast({
-          title: "Node Deleted",
-          description: "The node has been successfully deleted.",
-        });
       } catch (error: any) {
         console.error("Error deleting node:", error);
-        toast({
-          title: "Delete Node Failed",
-          description: error.message || "There was an error deleting the node. Please try again.",
-          variant: "destructive",
-        });
       }
     },
-    [mindmap_id, setNodes, setEdges, toast]
+    [mindmap_id, setNodes, setEdges]
   );
 
   return (

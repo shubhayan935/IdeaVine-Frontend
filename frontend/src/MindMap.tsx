@@ -20,6 +20,7 @@ import ReactFlow, {
   useOnSelectionChange,
   Panel,
   ReactFlowInstance,
+  XYPosition,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { Button } from "@/components/ui/button";
@@ -51,12 +52,14 @@ import { NodeOperationsProvider, NodeOperationsContext } from './context/NodeOpe
 
 // Define the structure of your custom node data
 interface CustomNodeData {
+  id?: string;
   title: string;
   content: string;
   parents: string[];
   children: string[];
   depth: number;
   isHighlighted?: boolean;
+  position?: XYPosition | undefined;
 }
 
 // Define the props for your custom node component
@@ -132,7 +135,7 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
   // Handle click outside to finish editing
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (nodeRef.current && !nodeRef.current.contains(event.target as Node) && isEditing) {
+      if (nodeRef.current && !nodeRef.current.contains(event.target as HTMLElement) && isEditing) {
         handleBlur();
       }
     };
@@ -227,7 +230,7 @@ const nodeTypes = {
 function MindMapContent() {
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const { fitView, setCenter, getNode } = useReactFlow();
+  const { fitView, setCenter } = useReactFlow();
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -337,105 +340,6 @@ function MindMapContent() {
     fetchOrCreateMindmap();
   }, [mindmap_id, isCreating, navigate, fitView, setNodes, setEdges, userEmail]);
 
-  // Add Node to Database
-  const addNodeToDB = useCallback(
-    async (parentId: string, position: 'top' | 'bottom' | 'left' | 'right') => {
-      try {
-        const newNodeId = uuidv4(); // Generate a new UUID
-        const parentNode = getNode(parentId);
-
-        if (!parentNode) {
-          throw new Error('Parent node not found.');
-        }
-        const newNode: Node<CustomNodeData> = {
-          id: newNodeId,
-          type: 'customNode',
-          data: {
-            title: 'New Node',
-            content: 'Double click to edit',
-            parents: [parentNode.id],
-            children: [],
-            depth: parentNode.data.depth + 1,
-          },
-          position: {
-            x: parentNode.position.x + (position === 'left' ? -200 : position === 'right' ? 200 : 0),
-            y: parentNode.position.y + (position === 'bottom' ? 100 : position === 'top' ? -100 : 0),
-          },
-        };
-
-        setNodes((nds) => [...nds, newNode]);
-
-        // Update parent node's children
-        setNodes((nds) =>
-          nds.map((node) => {
-            if (node.id === parentId) {
-              return {
-                ...node,
-                data: { ...node.data, children: [...node.data.children, newNodeId] },
-              };
-            }
-            return node;
-          })
-        );
-
-        // Create edge from parent to child
-        const newEdge: Edge = {
-          id: uuidv4(),
-          source: parentId,
-          target: newNodeId,
-        };
-
-        setEdges((eds) => addEdge(newEdge, eds));
-
-        // Send add node request to backend
-        const response = await fetch(`http://127.0.0.1:5000/mindmaps/${mindmap_id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({"nodes_to_add":[{
-            _id: newNodeId,
-            mindmap_id: mindmap_id,
-            user_email: userEmail,
-            title: newNode.data.title,
-            content: newNode.data.content,
-            position: newNode.position,
-            parents: newNode.data.parents,
-            children: newNode.data.children,
-            depth: newNode.data.depth,
-          }]}),
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to add node to the database.');
-        }
-
-        // Send add edge to backend
-        // const edgeResponse = await fetch(`http://127.0.0.1:5000/mindmaps/${mindmap_id}/edges`, {
-        //   method: 'POST',
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //   },
-        //   body: JSON.stringify({
-        //     _id: newEdge.id,
-        //     mindmap_id: mindmap_id,
-        //     source: newEdge.source,
-        //     target: newEdge.target,
-        //     type: newEdge.type,
-        //   }),
-        // });
-
-        // if (!edgeResponse.ok) {
-        //   throw new Error('Failed to add edge to the database.');
-        // }
-
-      } catch (error: any) {
-        console.error("Error adding node:", error);
-      }
-    },
-    [getNode, mindmap_id, setNodes, setEdges, userEmail]
-  );
-
   // Update Node in Database
   const updateNodeInDB = useCallback(
     async (node: Partial<CustomNodeData>) => {
@@ -449,10 +353,10 @@ function MindMapContent() {
           body: JSON.stringify({"nodes_to_update": [{
             node_id: node.id,
             type:'customNode',
-            title: node.data.title,
-            content: node.data.content,
-            parents: node.data.parents,
-            children: node.data.children,
+            title: node.title,
+            content: node.content,
+            parents: node.parents,
+            children: node.children,
             position: node.position,
         }]}),
         });
@@ -509,16 +413,15 @@ function MindMapContent() {
         if (change.type === 'position') {
           // Update the node's position in the database if it was dragged
           const node = nodes.find((n) => n.id === change.id);
+          console.log('saving node position: ', node);
           if (node) {
             updateNodeInDB({
               id: node.id,
-              data:{
-                title: node.data.title,
-                content: node.data.content,
-                parents: node.data.parents,
-                children: node.data.children,
-                depth: node.data.depth,
-              },
+              title: node.data?.title,
+              content: node.data?.content,
+              parents: node.data?.parents,
+              children: node.data?.children,
+              depth: node.data?.depth,
               position: change.position,
             });
           }

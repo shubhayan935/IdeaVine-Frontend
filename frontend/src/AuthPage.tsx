@@ -25,7 +25,7 @@ import {
   Eye,
   EyeOff
 } from 'lucide-react';
-import { useSignIn, useSignUp, useClerk } from '@clerk/clerk-react';
+import { useSignIn, useSignUp } from '@clerk/clerk-react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from "uuid"; // Import UUID
 
