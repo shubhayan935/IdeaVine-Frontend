@@ -58,31 +58,11 @@ const initialEdges: Edge[] = [
 ];
 
 const features = [
-  {
-    icon: Brain,
-    title: "Intuitive Mind Mapping",
-    description:
-      "Create and organize your ideas visually with our easy-to-use interface.",
-  },
-  {
-    icon: Zap,
-    title: "AI-Powered Suggestions",
-    description:
-      "Get intelligent suggestions to expand your mind maps and spark creativity.",
-  },
-  {
-    icon: PenTool,
-    title: "Rich Text Editing",
-    description:
-      "Format your notes and add details to your ideas with our powerful text editor.",
-  },
-  {
-    icon: Mic,
-    title: "Voice Recording",
-    description:
-      "Capture your thoughts on the go with built-in voice recording functionality.",
-  },
-];
+  { icon: Brain, title: 'Intuitive Mind Mapping', description: 'Create and organize your ideas visually with our easy-to-use interface.' },
+  { icon: Mic, title: 'Voice Recording', description: 'Capture your thoughts on the go with built-in voice recording functionality.' },
+  { icon: Zap, title: 'AI-Powered Suggestions', description: 'Get intelligent suggestions to expand your mind maps and spark creativity.' },
+  { icon: PenTool, title: 'Rich Text Editing', description: 'Format your notes and add details to your ideas with our powerful text editor.' },
+]
 
 const testimonials = [
   {
@@ -93,43 +73,77 @@ const testimonials = [
     avatar: "/placeholder.svg?height=40&width=40",
   },
   {
-    name: "Sarah Lee",
-    role: "Creative Director",
-    content:
-      "As a visual thinker, IdeaVine is a game-changer. It helps me organize my thoughts in a way that makes sense to me and my team.",
-    avatar: "/placeholder.svg?height=40&width=40",
+    name: 'Sarah Lee',
+    role: 'Creative Director',
+    content: 'As a visual thinker, IdeaVine is a game-changer. It helps me organize my thoughts everyday in a way that makes sense to me and my team.',
+    avatar: '/placeholder.svg?height=40&width=40',
   },
   {
-    name: "Michael Chen",
-    role: "Entrepreneur",
-    content:
-      "The voice recording feature is perfect for capturing ideas on the go. IdeaVine has become an essential tool for my business planning.",
-    avatar: "/placeholder.svg?height=40&width=40",
+    name: 'Michael Chen',
+    role: 'Entrepreneur',
+    content: 'The voice recording feature is perfect for capturing ideas on the go. IdeaVine has become essential for planning my essays.',
+    avatar: '/placeholder.svg?height=40&width=40',
   },
 ];
 
 const faqItems = [
   {
-    question: "What is IdeaVine?",
-    answer:
-      "IdeaVine is an innovative mind mapping tool that helps you visualize, organize, and expand your ideas. It combines intuitive design with AI-powered suggestions to enhance your creative process.",
+    question: 'What is IdeaVine?',
+    answer: 'IdeaVine is an innovative mind mapping tool that helps you visualize, organize, and expand your ideas. It combines intuitive design with voice-enabled mind mapping to AI-powered suggestions to enhance your creative process.',
   },
   {
-    question: "Is there a free trial available?",
-    answer:
-      "Yes, we offer a 14-day free trial for all new users. This gives you full access to all features so you can experience the power of IdeaVine firsthand.",
+    question: 'Is IdeaVine just for creatives or writing essays?',
+    answer: 'You can use IdeaVine for literally anything - from talking about your day and daily planning to taking notes for a meeting - the possibilities are endless.',
   },
   {
-    question: "Can I collaborate with others on my mind maps?",
-    answer:
-      "IdeaVine supports real-time collaboration, allowing you to work on mind maps with your team members or clients simultaneously.",
+    question: 'Can I collaborate with others on my mind maps?',
+    answer: 'Soon! IdeaVine 2.0 will allow you to share your mindmaps and documents, allowing others to collaborate on shared mindmaps, similar to Figma and Google Docs.',
   },
   {
-    question: "Is my data secure?",
-    answer:
-      "We take data security very seriously. All your mind maps and personal information are encrypted and stored securely. We never share your data with third parties.",
+    question: 'Is my data secure?',
+    answer: 'We take data security very seriously. All your mind maps and personal information are encrypted using TLS and AES-256 and stored securely. We never share your data with third parties.',
   },
 ];
+
+// ShootingStar component
+// ShootingStar component with trail effect
+const ShootingStar: React.FC = () => {
+  const randomDelay = Math.random() * 5
+  const randomDuration = 1 + Math.random() * 2
+
+  return (
+    <motion.div
+      className="absolute"
+      initial={{ 
+        top: `${Math.random() * 100}%`, 
+        left: '-5%',
+      }}
+      animate={{
+        top: [`${Math.random() * 100}%`, `${Math.random() * 100}%`],
+        left: ['105%', '-5%'],
+      }}
+      transition={{
+        duration: randomDuration,
+        delay: randomDelay,
+        repeat: Infinity,
+        repeatDelay: Math.random() * 10
+      }}
+    >
+      <motion.div
+        className="w-1 h-1 bg-white rounded-full"
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 0.2 }}
+      />
+      <motion.div
+        className="absolute top-0 right-0 w-8 h-1 bg-gradient-to-l from-transparent to-white"
+        initial={{ scaleX: 0, opacity: 0 }}
+        animate={{ scaleX: 1, opacity: [0, 1, 0] }}
+        transition={{ duration: 0.5, times: [0, 0.5, 1] }}
+      />
+    </motion.div>
+  )
+}
 
 function LandingPageContent() {
   const [email, setEmail] = useState("");
@@ -143,6 +157,8 @@ function LandingPageContent() {
 
   const [nodes] = useState(initialNodes);
   const [edges] = useState(initialEdges);
+
+  const [starCount, setStarCount] = useState(25)
 
   const { userEmail } = useUserInfo();
 
@@ -173,11 +189,24 @@ function LandingPageContent() {
     }
   }, [controls, inView]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 0) {
+        setStarCount(10)
+      } else {
+        setStarCount(25)
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   const fetchMindmaps = async () => {
     if (!userEmail) return;
 
     try {
-      const response = await fetch(`http://127.0.0.1:10000/users/lookup`, {
+      const response = await fetch(`https://ideavine.onrender.com/users/lookup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -205,7 +234,7 @@ function LandingPageContent() {
   const fetchMindmapsByUid = async (userUid: string) => {
     try {
       const response = await fetch(
-        `http://127.0.0.1:10000/users/${userUid}/mindmaps`,
+        `https://ideavine.onrender.com/users/${userUid}/mindmaps`,
         {
           method: "GET",
           headers: {
@@ -255,6 +284,10 @@ function LandingPageContent() {
             size={1}
           />
         </ReactFlow>
+        {/* Add multiple shooting stars */}
+        {[...Array(starCount)].map((_, index) => (
+          <ShootingStar key={index} />
+        ))}
       </div>
 
       {/* Navigation */}
@@ -353,11 +386,7 @@ function LandingPageContent() {
                 you capture, organize, and expand your ideas like never before.
               </p>
               <div className="mt-10 flex items-center justify-center gap-x-6">
-                <Button
-                  size="lg"
-                  className="rounded-full"
-                  onClick={() => navigate("/mindmap")}
-                >
+                <Button size="lg" className="rounded-full" onClick={fetchMindmaps}>
                   Get Started
                   <ChevronRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -439,15 +468,9 @@ function LandingPageContent() {
               onValueChange={setActiveTab}
             >
               <TabsList className="grid w-full grid-cols-3 mb-8 bg-secondary">
-                <TabsTrigger value="mindmap" className="bg-secondary">
-                  Mind Mapping
-                </TabsTrigger>
-                <TabsTrigger value="suggestions" className="bg-secondary">
-                  AI Suggestions
-                </TabsTrigger>
-                <TabsTrigger value="voice" className="bg-secondary">
-                  Voice Recording
-                </TabsTrigger>
+                <TabsTrigger value="mindmap" className="bg-secondary">Mind Mapping</TabsTrigger>
+                <TabsTrigger value="voice" className="bg-secondary">Voice Recording</TabsTrigger>
+                <TabsTrigger value="suggestions" className="bg-secondary">AI Suggestions</TabsTrigger>
               </TabsList>
               <AnimatePresence mode="wait">
                 <motion.div

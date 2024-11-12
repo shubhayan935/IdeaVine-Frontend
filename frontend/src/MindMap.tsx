@@ -317,17 +317,14 @@ function MindMapContent() {
       if (mindmap_id) {
         // Fetch existing mindmap nodes
         try {
-          const response = await fetch(
-            `http://127.0.0.1:10000/mindmaps/${mindmap_id}/nodes`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                // Include authentication headers if required by backend
-                // 'Authorization': `Bearer ${token}`
-              },
-            }
-          );
+          const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap_id}/nodes`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              // Include authentication headers if required by backend
+              // 'Authorization': `Bearer ${token}`
+            },
+          });
 
           if (!response.ok) {
             const errorData = await response.json();
@@ -388,28 +385,21 @@ function MindMapContent() {
     async (node: Partial<CustomNodeData>) => {
       try {
         // Send update request to backend
-        const response = await fetch(
-          `http://127.0.0.1:10000/mindmaps/${mindmap_id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              nodes_to_update: [
-                {
-                  node_id: node.id,
-                  type: "customNode",
-                  title: node.title,
-                  content: node.content,
-                  parents: node.parents,
-                  children: node.children,
-                  position: node.position,
-                },
-              ],
-            }),
-          }
-        );
+        const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({"nodes_to_update": [{
+            node_id: node.id,
+            type:'customNode',
+            title: node.title,
+            content: node.content,
+            parents: node.parents,
+            children: node.children,
+            position: node.position,
+        }]}),
+        });
 
         if (!response.ok) {
           throw new Error("Failed to update node in the database.");
@@ -426,16 +416,13 @@ function MindMapContent() {
     async (nodeId: string) => {
       try {
         // Send delete request for node
-        const response = await fetch(
-          `http://127.0.0.1:10000/mindmaps/${mindmap_id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ nodes_to_delete: [nodeId] }),
-          }
-        );
+        const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({"nodes_to_delete": [nodeId]}),
+        });
 
         if (!response.ok) {
           throw new Error("Failed to delete node from the database.");
@@ -468,7 +455,6 @@ function MindMapContent() {
         if (change.type === "position") {
           // Update the node's position in the database if it was dragged
           const node = nodes.find((n) => n.id === change.id);
-          console.log("saving node position: ", node);
           if (node) {
             updateNodeInDB({
               id: node.id,
@@ -490,16 +476,13 @@ function MindMapContent() {
   const updateMindmapTitle = useCallback(
     async (title: string) => {
       try {
-        const response = await fetch(
-          `http://127.0.0.1:10000/mindmaps/${mindmap_id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ title }),
-          }
-        );
+        const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ title }),
+        });
 
         if (!response.ok) {
           throw new Error("Failed to update mindmap title.");
@@ -557,22 +540,19 @@ function MindMapContent() {
 
       // Send edge to backend
       try {
-        const response = await fetch(
-          `http://127.0.0.1:10000/mindmaps/${mindmap_id}/edges`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              _id: newEdge.id,
-              mindmap_id: mindmap_id,
-              source: newEdge.source,
-              target: newEdge.target,
-              type: newEdge.type,
-            }),
-          }
-        );
+        const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap_id}/edges`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            _id: newEdge.id,
+            mindmap_id: mindmap_id,
+            source: newEdge.source,
+            target: newEdge.target,
+            type: newEdge.type,
+          }),
+        });
 
         if (!response.ok) {
           throw new Error("Failed to add edge to the database.");
@@ -619,16 +599,13 @@ function MindMapContent() {
 
     // Send add node request to backend
     try {
-      const response = await fetch(
-        `http://127.0.0.1:10000/mindmaps/${mindmap_id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(nodesToAdd),
-        }
-      );
+      const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(nodesToAdd),
+      });
 
       if (!response.ok) {
         throw new Error("Failed to add node to the database.");
@@ -710,8 +687,8 @@ function MindMapContent() {
       }));
 
     try {
-      const response = await fetch("http://127.0.0.1:10000/synthesize", {
-        method: "POST",
+      const response = await fetch('https://ideavine.onrender.com/synthesize', {
+        method: 'POST',
         headers: {
           "Content-Type": "application/json",
         },
@@ -776,30 +753,23 @@ function MindMapContent() {
       setEdges((eds) => [...eds, ...newEdges]);
 
       // Send add node request to backend
-      const nodeResponse = await fetch(
-        `http://127.0.0.1:10000/mindmaps/${mindmap_id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            nodes_to_add: [
-              {
-                _id: newNodeId,
-                mindmap_id: mindmap_id,
-                user_email: userEmail,
-                title: newNode.data.title,
-                content: newNode.data.content,
-                position: newNode.position,
-                parents: newNode.data.parents,
-                children: newNode.data.children,
-                depth: newNode.data.depth,
-              },
-            ],
-          }),
-        }
-      );
+      const nodeResponse = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({"nodes_to_add": [{
+          _id: newNodeId,
+          mindmap_id: mindmap_id,
+          user_email: userEmail,
+          title: newNode.data.title,
+          content: newNode.data.content,
+          position: newNode.position,
+          parents: newNode.data.parents,
+          children: newNode.data.children,
+          depth: newNode.data.depth,
+        }]}),
+      });
 
       if (!nodeResponse.ok) {
         throw new Error("Failed to add suggested node to the database.");
@@ -807,7 +777,7 @@ function MindMapContent() {
 
       // Send add edges to backend
       // for (const edge of newEdges) {
-      //   const edgeResponse = await fetch(`http://127.0.0.1:10000/mindmaps/${mindmap_id}/edges`, {
+      //   const edgeResponse = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap_id}/edges`, {
       //     method: 'POST',
       //     headers: {
       //       'Content-Type': 'application/json',
@@ -848,8 +818,8 @@ function MindMapContent() {
     }));
 
     try {
-      const response = await fetch("http://127.0.0.1:10000/write", {
-        method: "POST",
+      const response = await fetch('https://ideavine.onrender.com/write', {
+        method: 'POST',
         headers: {
           "Content-Type": "application/json",
         },
@@ -989,8 +959,8 @@ function MindMapContent() {
     formData.append("audio_file", audioBlob, "recording.webm");
 
     try {
-      const response = await fetch("http://127.0.0.1:10000/process_audio", {
-        method: "POST",
+      const response = await fetch('https://ideavine.onrender.com/process_audio', {
+        method: 'POST',
         body: formData,
       });
 
@@ -1092,30 +1062,23 @@ function MindMapContent() {
       // Send new nodes to backend
       newNodes.forEach(async (node) => {
         try {
-          const response = await fetch(
-            `http://127.0.0.1:10000/mindmaps/${mindmap_id}`,
-            {
-              method: "PUT",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                nodes_to_add: [
-                  {
-                    _id: node.id,
-                    mindmap_id: mindmap_id,
-                    user_email: userEmail,
-                    title: node.data.title,
-                    content: node.data.content,
-                    position: node.position,
-                    parents: node.data.parents,
-                    children: node.data.children,
-                    depth: node.data.depth,
-                  },
-                ],
-              }),
-            }
-          );
+          const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap_id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({"nodes_to_add": [{
+              _id: node.id,
+              mindmap_id: mindmap_id,
+              user_email: userEmail,
+              title: node.data.title,
+              content: node.data.content,
+              position: node.position,
+              parents: node.data.parents,
+              children: node.data.children,
+              depth: node.data.depth,
+            }]}),
+          });
 
           if (!response.ok) {
             throw new Error("Failed to add node to the database.");
@@ -1128,7 +1091,7 @@ function MindMapContent() {
       // Send new edges to backend
       // derivedEdges.forEach(async (edge) => {
       //   try {
-      //     const response = await fetch(`http://127.0.0.1:10000/mindmaps/${mindmap_id}/edges`, {
+      //     const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap_id}/edges`, {
       //       method: 'POST',
       //       headers: {
       //         'Content-Type': 'application/json',
