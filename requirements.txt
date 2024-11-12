@@ -5,3 +5,4 @@ openai==1.52.2
 python-dotenv==1.0.1
 vertexai==1.70.0
 gunicorn==21.2.0
+pymongo==4.5.0

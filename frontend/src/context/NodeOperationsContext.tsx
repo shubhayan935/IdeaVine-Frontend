@@ -101,30 +101,25 @@ export const NodeOperationsProvider = ({
 
         setEdges((eds) => addEdge(newEdge, eds));
 
-        const response = await fetch(
-          `http://127.0.0.1:10000/mindmaps/${mindmap_id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              nodes_to_add: [
-                {
-                  _id: newNodeId,
-                  mindmap_id: mindmap_id,
-                  user_email: userEmail,
-                  title: newNode.data.title,
-                  content: newNode.data.content,
-                  position: newNode.position,
-                  parents: newNode.data.parents,
-                  children: newNode.data.children,
-                  depth: newNode.data.depth,
-                },
-              ],
-            }),
-          }
-        );
+        const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            "nodes_to_add":[{
+              _id: newNodeId,
+              mindmap_id: mindmap_id,
+              user_email: userEmail,
+              title: newNode.data.title,
+              content: newNode.data.content,
+              position: newNode.position,
+              parents: newNode.data.parents,
+              children: newNode.data.children,
+              depth: newNode.data.depth,
+            }]
+          }),
+        });
 
         if (!response.ok) {
           throw new Error("Failed to add node to the database.");
@@ -139,29 +134,24 @@ export const NodeOperationsProvider = ({
   const updateNodeInDB = useCallback(
     async (node: Partial<CustomNodeData>) => {
       try {
-        const response = await fetch(
-          `http://127.0.0.1:10000/mindmaps/${mindmap_id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              nodes_to_update: [
-                {
-                  node_id: node.id,
-                  type: "customNode",
-                  title: node.title,
-                  content: node.content,
-                  parents: node.parents,
-                  children: node.children,
-                  position: node.position,
-                  depth: node.depth,
-                },
-              ],
-            }),
-          }
-        );
+        const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            "nodes_to_update": [{
+              node_id: node.id,
+              type: 'customNode',
+              title: node.title,
+              content: node.content,
+              parents: node.parents,
+              children: node.children,
+              position: node.position,
+              depth: node.depth,
+            }]
+          }),
+        });
 
         if (!response.ok) {
           throw new Error("Failed to update node in the database.");
@@ -176,16 +166,13 @@ export const NodeOperationsProvider = ({
   const deleteNodeFromDB = useCallback(
     async (nodeId: string) => {
       try {
-        const response = await fetch(
-          `http://127.0.0.1:10000/mindmaps/${mindmap_id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ nodes_to_delete: [nodeId] }),
-          }
-        );
+        const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap_id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({"nodes_to_delete": [nodeId]}),
+        });
 
         if (!response.ok) {
           throw new Error("Failed to delete node from the database.");

@@ -235,8 +235,8 @@ export default function AuthPage() {
       };
 
       // Make POST request to backend to create user in MongoDB
-      const response = await fetch("http://127.0.0.1:10000/users", {
-        method: "POST",
+      const response = await fetch('https://ideavine.onrender.com/users', {
+        method: 'POST',
         headers: {
           "Content-Type": "application/json",
           // Include authentication headers if your backend requires them
@@ -269,9 +269,9 @@ export default function AuthPage() {
     };
 
     try {
-      const response = await fetch("http://127.0.0.1:10000/mindmaps", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('https://ideavine.onrender.com/mindmaps', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(blankMindmap),
       });
 
