@@ -1,10 +1,10 @@
 // src/contexts/NodeOperationsContext.tsx
 
-import React, { createContext, ReactNode, useCallback } from 'react';
-import { Node, Edge, addEdge, XYPosition } from 'reactflow';
-import { v4 as uuidv4 } from 'uuid';
-import { useUserInfo } from '../context/UserContext';
-import { useParams } from 'react-router-dom';
+import React, { createContext, ReactNode, useCallback } from "react";
+import { Node, Edge, addEdge, XYPosition } from "reactflow";
+import { v4 as uuidv4 } from "uuid";
+import { useUserInfo } from "../context/UserContext";
+import { useParams } from "react-router-dom";
 
 interface CustomNodeData {
   id?: string;
@@ -18,12 +18,17 @@ interface CustomNodeData {
 }
 
 interface NodeOperationsContextProps {
-  addNodeToDB: (parentId: string, position: 'top' | 'bottom' | 'left' | 'right') => Promise<void>;
+  addNodeToDB: (
+    parentId: string,
+    position: "top" | "bottom" | "left" | "right"
+  ) => Promise<void>;
   updateNodeInDB: (node: Partial<CustomNodeData>) => Promise<void>;
   deleteNodeFromDB: (nodeId: string) => Promise<void>;
 }
 
-export const NodeOperationsContext = createContext<NodeOperationsContextProps | undefined>(undefined);
+export const NodeOperationsContext = createContext<
+  NodeOperationsContextProps | undefined
+>(undefined);
 
 interface NodeOperationsProviderProps {
   children: ReactNode;
@@ -43,27 +48,31 @@ export const NodeOperationsProvider = ({
   const { userEmail } = useUserInfo();
 
   const addNodeToDB = useCallback(
-    async (parentId: string, position: 'top' | 'bottom' | 'left' | 'right') => {
+    async (parentId: string, position: "top" | "bottom" | "left" | "right") => {
       try {
         const newNodeId = uuidv4();
-        const parentNode = nodes.find(node => node.id === parentId);
+        const parentNode = nodes.find((node) => node.id === parentId);
 
         if (!parentNode) {
-          throw new Error('Parent node not found.');
+          throw new Error("Parent node not found.");
         }
         const newNode: Node<CustomNodeData> = {
           id: newNodeId,
-          type: 'customNode',
+          type: "customNode",
           data: {
-            title: 'New Node',
-            content: '',
+            title: "New Node",
+            content: "",
             parents: [parentId],
             children: [],
             depth: parentNode.data.depth + 1,
           },
           position: {
-            x: parentNode.position.x + (position === 'left' ? -200 : position === 'right' ? 200 : 0),
-            y: parentNode.position.y + (position === 'bottom' ? 100 : position === 'top' ? -100 : 0),
+            x:
+              parentNode.position.x +
+              (position === "left" ? -200 : position === "right" ? 200 : 0),
+            y:
+              parentNode.position.y +
+              (position === "bottom" ? 100 : position === "top" ? -100 : 0),
           },
         };
 
@@ -74,7 +83,10 @@ export const NodeOperationsProvider = ({
             if (node.id === parentId) {
               return {
                 ...node,
-                data: { ...node.data, children: [...node.data.children, newNodeId] },
+                data: {
+                  ...node.data,
+                  children: [...node.data.children, newNodeId],
+                },
               };
             }
             return node;
@@ -110,9 +122,8 @@ export const NodeOperationsProvider = ({
         });
 
         if (!response.ok) {
-          throw new Error('Failed to add node to the database.');
+          throw new Error("Failed to add node to the database.");
         }
-
       } catch (error: any) {
         console.error("Error adding node:", error);
       }
@@ -143,7 +154,7 @@ export const NodeOperationsProvider = ({
         });
 
         if (!response.ok) {
-          throw new Error('Failed to update node in the database.');
+          throw new Error("Failed to update node in the database.");
         }
       } catch (error: any) {
         console.error("Error updating node:", error);
@@ -164,11 +175,13 @@ export const NodeOperationsProvider = ({
         });
 
         if (!response.ok) {
-          throw new Error('Failed to delete node from the database.');
+          throw new Error("Failed to delete node from the database.");
         }
 
         setNodes((nds) => nds.filter((node) => node.id !== nodeId));
-        setEdges((eds) => eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
+        setEdges((eds) =>
+          eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
+        );
       } catch (error: any) {
         console.error("Error deleting node:", error);
       }
@@ -177,9 +190,10 @@ export const NodeOperationsProvider = ({
   );
 
   return (
-    <NodeOperationsContext.Provider value={{ addNodeToDB, updateNodeInDB, deleteNodeFromDB }}>
+    <NodeOperationsContext.Provider
+      value={{ addNodeToDB, updateNodeInDB, deleteNodeFromDB }}
+    >
       {children}
     </NodeOperationsContext.Provider>
   );
 };
-

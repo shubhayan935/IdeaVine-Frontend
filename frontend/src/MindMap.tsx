@@ -1,7 +1,7 @@
 // src/components/MindMap.tsx
 
-import { useEffect, useState, useCallback, useRef, useContext } from 'react';
-import dagre from 'dagre';
+import { useEffect, useState, useCallback, useRef, useContext } from "react";
+import dagre from "dagre";
 import ReactFlow, {
   Node,
   Edge,
@@ -21,8 +21,8 @@ import ReactFlow, {
   Panel,
   ReactFlowInstance,
   XYPosition,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+} from "reactflow";
+import "reactflow/dist/style.css";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -36,19 +36,19 @@ import {
   PenTool,
   X,
   Search,
-  Menu
-} from 'lucide-react';
-import {
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+  Menu,
+} from "lucide-react";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar, SidebarUpdateContext } from "./Sidebar";
-import { v4 as uuidv4 } from 'uuid';
-import { useMediaQuery } from 'react-responsive';
-import { useUserInfo } from './context/UserContext';
-import { useParams, useNavigate } from 'react-router-dom';
-import { deriveEdgesFromNodes } from './utils/deriveEdges';
-import { NodeOperationsProvider, NodeOperationsContext } from './context/NodeOperationsContext';
+import { v4 as uuidv4 } from "uuid";
+import { useMediaQuery } from "react-responsive";
+import { useUserInfo } from "./context/UserContext";
+import { useParams, useNavigate } from "react-router-dom";
+import { deriveEdgesFromNodes } from "./utils/deriveEdges";
+import {
+  NodeOperationsProvider,
+  NodeOperationsContext,
+} from "./context/NodeOperationsContext";
 
 // Define the structure of your custom node data
 interface CustomNodeData {
@@ -78,7 +78,9 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
 
   const nodeOperations = useContext(NodeOperationsContext);
   if (!nodeOperations) {
-    throw new Error("NodeOperationsContext is undefined. Make sure to wrap your component with NodeOperationsProvider.");
+    throw new Error(
+      "NodeOperationsContext is undefined. Make sure to wrap your component with NodeOperationsProvider."
+    );
   }
 
   const { addNodeToDB, updateNodeInDB, deleteNodeFromDB } = nodeOperations;
@@ -118,7 +120,6 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
       })
     );
   }, [id, nodeData, setNodes, updateNodeInDB]); // Ensure updateNodeInDB is in dependencies
-  
 
   const handleDelete = useCallback(() => {
     deleteNodeFromDB(id);
@@ -126,7 +127,7 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
 
   // Handle adding a new node in a specific direction
   const handleAddNode = useCallback(
-    (position: 'top' | 'bottom' | 'left' | 'right') => {
+    (position: "top" | "bottom" | "left" | "right") => {
       addNodeToDB(id, position);
     },
     [id, addNodeToDB]
@@ -135,40 +136,54 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
   // Handle click outside to finish editing
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (nodeRef.current && !nodeRef.current.contains(event.target as HTMLElement) && isEditing) {
+      if (
+        nodeRef.current &&
+        !nodeRef.current.contains(event.target as HTMLElement) &&
+        isEditing
+      ) {
         handleBlur();
       }
     };
 
     if (isEditing) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isEditing, handleBlur]);
 
   return (
     <div className="relative" ref={nodeRef}>
       {/* Handles for connections */}
-      <Handle type="target" position={Position.Top} isConnectable={isConnectable} />
-      <div className={`px-4 py-2 shadow-md rounded-md bg-white border-2 ${
-                        selected ? 'border-primary' : 'border-gray-200'
-                      } ${
-                        data.isHighlighted ? 'bg-yellow-100' : ''
-                      } transition-[background-color] duration-1000`}>
+      <Handle
+        type="target"
+        position={Position.Top}
+        isConnectable={isConnectable}
+      />
+      <div
+        className={`px-4 py-2 shadow-md rounded-md bg-white border-2 ${
+          selected ? "border-primary" : "border-gray-200"
+        } ${
+          data.isHighlighted ? "bg-yellow-100" : ""
+        } transition-[background-color] duration-1000`}
+      >
         {isEditing ? (
           // Editing Mode
           <div className="flex flex-col gap-2">
             <Input
               value={nodeData.title}
-              onChange={(e) => setNodeData({ ...nodeData, title: e.target.value })}
+              onChange={(e) =>
+                setNodeData({ ...nodeData, title: e.target.value })
+              }
               autoFocus
             />
             <Textarea
               value={nodeData.content}
-              onChange={(e) => setNodeData({ ...nodeData, content: e.target.value })}
+              onChange={(e) =>
+                setNodeData({ ...nodeData, content: e.target.value })
+              }
             />
             <div className="flex justify-between">
               <Button onClick={handleDelete} variant="destructive" size="sm">
@@ -190,28 +205,42 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
         )}
       </div>
       {/* More Handles */}
-      <Handle type="source" position={Position.Bottom} isConnectable={isConnectable} />
-      <Handle type="source" position={Position.Left} isConnectable={isConnectable} />
-      <Handle type="source" position={Position.Right} isConnectable={isConnectable} />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        isConnectable={isConnectable}
+      />
+      <Handle
+        type="source"
+        position={Position.Left}
+        isConnectable={isConnectable}
+      />
+      <Handle
+        type="source"
+        position={Position.Right}
+        isConnectable={isConnectable}
+      />
       {/* Add Node Buttons */}
-      {['top', 'right', 'bottom', 'left'].map((position) => (
+      {["top", "right", "bottom", "left"].map((position) => (
         <div
           key={position}
           className={`absolute ${
-            position === 'top'
-              ? '-top-4 left-1/2 transform -translate-x-1/2'
-              : position === 'right'
-              ? 'top-1/2 -right-4 transform -translate-y-1/2'
-              : position === 'bottom'
-              ? '-bottom-4 left-1/2 transform -translate-x-1/2'
-              : 'top-1/2 -left-4 transform -translate-y-1/2'
+            position === "top"
+              ? "-top-4 left-1/2 transform -translate-x-1/2"
+              : position === "right"
+              ? "top-1/2 -right-4 transform -translate-y-1/2"
+              : position === "bottom"
+              ? "-bottom-4 left-1/2 transform -translate-x-1/2"
+              : "top-1/2 -left-4 transform -translate-y-1/2"
           } opacity-0 hover:opacity-100 transition-opacity`}
         >
           <Button
             size="sm"
             variant="outline"
             className="rounded-full p-1"
-            onClick={() => handleAddNode(position as 'top' | 'right' | 'bottom' | 'left')}
+            onClick={() =>
+              handleAddNode(position as "top" | "right" | "bottom" | "left")
+            }
           >
             <Plus className="h-4 w-4" />
           </Button>
@@ -234,24 +263,25 @@ function MindMapContent() {
   const reactFlowInstance = useRef<ReactFlowInstance | null>(null);
   const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [mapTitle, setMapTitle] = useState<string>('Untitled Mind Map');
+  const [mapTitle, setMapTitle] = useState<string>("Untitled Mind Map");
   const { updateSidebarTitle } = useContext(SidebarUpdateContext);
-  const [previousTitle, setPreviousTitle] = useState<string>('Untitled Mind Map');
+  const [previousTitle, setPreviousTitle] =
+    useState<string>("Untitled Mind Map");
   const [layoutOnNextRender, setLayoutOnNextRender] = useState(false);
 
   const [isRecording, setIsRecording] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
-  const [essayTitle, setEssayTitle] = useState('');
-  const [essayContent, setEssayContent] = useState('');
+  const [essayTitle, setEssayTitle] = useState("");
+  const [essayContent, setEssayContent] = useState("");
 
   const [isRecordingLoading, setIsRecordingLoading] = useState(false);
   const [isSuggestLoading, setIsSuggestLoading] = useState(false);
   const [isWriteLoading, setIsWriteLoading] = useState(false);
   const [isCreating] = useState(false);
 
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { userEmail } = useUserInfo(); // Access userEmail from context
   const { mindmap_id } = useParams<{ mindmap_id: string }>(); // Extract mindmap_id from URL
@@ -298,33 +328,35 @@ function MindMapContent() {
 
           if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to fetch mindmap nodes');
+            throw new Error(errorData.error || "Failed to fetch mindmap nodes");
           }
 
           const data = await response.json();
-          const fetchedNodes: Node<CustomNodeData>[] = data.nodes.map((node: any) => ({
-            id: node._id,
-            type: 'customNode',
-            data: {
-              title: node.title,
-              content: node.content,
-              parents: node.parents,
-              children: node.children,
-              depth: node.depth,
-            },
-            position: {
-              x: Number(node.position.x),
-              y: Number(node.position.y),
-            },
-          }));
+          const fetchedNodes: Node<CustomNodeData>[] = data.nodes.map(
+            (node: any) => ({
+              id: node._id,
+              type: "customNode",
+              data: {
+                title: node.title,
+                content: node.content,
+                parents: node.parents,
+                children: node.children,
+                depth: node.depth,
+              },
+              position: {
+                x: Number(node.position.x),
+                y: Number(node.position.y),
+              },
+            })
+          );
 
           // Derive edges from nodes
           const derivedEdges = deriveEdgesFromNodes(fetchedNodes);
 
           setNodes(fetchedNodes);
           setEdges(derivedEdges);
-          setMapTitle(data.mindmap.title || 'Untitled Mind Map');
-          setPreviousTitle(data.mindmap.title || 'Untitled Mind Map');
+          setMapTitle(data.mindmap.title || "Untitled Mind Map");
+          setPreviousTitle(data.mindmap.title || "Untitled Mind Map");
 
           // Optionally, fit the view to the nodes
           window.requestAnimationFrame(() => {
@@ -332,13 +364,21 @@ function MindMapContent() {
           });
         } catch (err: any) {
           console.error("Error fetching mindmap nodes:", err);
-          navigate('/'); // Redirect to home or another appropriate page
+          navigate("/"); // Redirect to home or another appropriate page
         }
       }
     };
 
     fetchOrCreateMindmap();
-  }, [mindmap_id, isCreating, navigate, fitView, setNodes, setEdges, userEmail]);
+  }, [
+    mindmap_id,
+    isCreating,
+    navigate,
+    fitView,
+    setNodes,
+    setEdges,
+    userEmail,
+  ]);
 
   // Update Node in Database
   const updateNodeInDB = useCallback(
@@ -362,7 +402,7 @@ function MindMapContent() {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to update node in the database.');
+          throw new Error("Failed to update node in the database.");
         }
       } catch (error: any) {
         console.error("Error updating node:", error);
@@ -385,11 +425,13 @@ function MindMapContent() {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to delete node from the database.');
+          throw new Error("Failed to delete node from the database.");
         }
 
         // Delete associated edges from frontend
-        setEdges((eds) => eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
+        setEdges((eds) =>
+          eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
+        );
       } catch (error: any) {
         console.error("Error deleting node:", error);
       }
@@ -410,7 +452,7 @@ function MindMapContent() {
   const handleNodesChange = useCallback(
     (changes: any[]) => {
       changes.forEach((change) => {
-        if (change.type === 'position') {
+        if (change.type === "position") {
           // Update the node's position in the database if it was dragged
           const node = nodes.find((n) => n.id === change.id);
           if (node) {
@@ -431,7 +473,7 @@ function MindMapContent() {
   );
 
   // Update Mindmap Title in Database
-  const updateMindmapTitle = useCallback( 
+  const updateMindmapTitle = useCallback(
     async (title: string) => {
       try {
         const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap_id}`, {
@@ -443,11 +485,11 @@ function MindMapContent() {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to update mindmap title.');
+          throw new Error("Failed to update mindmap title.");
         }
 
         // Update the sidebar title via context
-        if (mindmap_id){
+        if (mindmap_id) {
           updateSidebarTitle(mindmap_id, title);
         }
       } catch (error: any) {
@@ -466,13 +508,19 @@ function MindMapContent() {
 
   // Update Mindmap Title on Blur
   const handleTitleBlur = useCallback(() => {
-    if (mapTitle.trim() === '') {
+    if (mapTitle.trim() === "") {
       setMapTitle(previousTitle);
     } else {
       setPreviousTitle(mapTitle);
       updateMindmapTitle(mapTitle);
     }
-  }, [mapTitle, previousTitle, updateMindmapTitle, mindmap_id, updateSidebarTitle]);
+  }, [
+    mapTitle,
+    previousTitle,
+    updateMindmapTitle,
+    mindmap_id,
+    updateSidebarTitle,
+  ]);
 
   useOnSelectionChange({
     onChange: ({ nodes }) => {
@@ -507,7 +555,7 @@ function MindMapContent() {
         });
 
         if (!response.ok) {
-          throw new Error('Failed to add edge to the database.');
+          throw new Error("Failed to add edge to the database.");
         }
       } catch (error: any) {
         console.error("Error adding edge:", error);
@@ -521,23 +569,33 @@ function MindMapContent() {
     const newNodeId = uuidv4(); // Use UUID for node ID
     const newNode: Node<CustomNodeData> = {
       id: newNodeId,
-      type: 'customNode',
-      data: { title: 'New Node', content: 'Double Click to edit', parents: [], children: [], depth: 0 },
+      type: "customNode",
+      data: {
+        title: "New Node",
+        content: "Double Click to edit",
+        parents: [],
+        children: [],
+        depth: 0,
+      },
       position: { x: Math.random() * 500, y: Math.random() * 500 },
     };
     setNodes((nds) => [...nds, newNode]);
 
-    let nodesToAdd = {"nodes_to_add": [{
-      _id: newNodeId,
-      mindmap_id: mindmap_id,
-      user_email: userEmail,
-      title: newNode.data.title,
-      content: newNode.data.content,
-      position: newNode.position,
-      parents: newNode.data.parents,
-      children: newNode.data.children,
-      depth: newNode.data.depth,
-    }]}
+    let nodesToAdd = {
+      nodes_to_add: [
+        {
+          _id: newNodeId,
+          mindmap_id: mindmap_id,
+          user_email: userEmail,
+          title: newNode.data.title,
+          content: newNode.data.content,
+          position: newNode.position,
+          parents: newNode.data.parents,
+          children: newNode.data.children,
+          depth: newNode.data.depth,
+        },
+      ],
+    };
 
     // Send add node request to backend
     try {
@@ -550,7 +608,7 @@ function MindMapContent() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to add node to the database.');
+        throw new Error("Failed to add node to the database.");
       }
     } catch (error: any) {
       console.error("Error adding node:", error);
@@ -566,7 +624,7 @@ function MindMapContent() {
 
     const dagreGraph = new dagre.graphlib.Graph();
     dagreGraph.setDefaultEdgeLabel(() => ({}));
-    dagreGraph.setGraph({ rankdir: 'TB' });
+    dagreGraph.setGraph({ rankdir: "TB" });
 
     // Add nodes to the dagre graph and get their actual dimensions
     nodeElements.forEach((node) => {
@@ -632,13 +690,13 @@ function MindMapContent() {
       const response = await fetch('https://ideavine.onrender.com/synthesize', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ nodes: selectedNodesData }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to get suggestion');
+        throw new Error("Failed to get suggestion");
       }
 
       const data = await response.json();
@@ -650,13 +708,18 @@ function MindMapContent() {
 
       const newNode: Node<CustomNodeData> = {
         id: newNodeId,
-        type: 'customNode',
+        type: "customNode",
         data: {
           title: suggestedNode.title,
           content: suggestedNode.content,
           parents: selectedNodes,
           children: [],
-          depth: Math.max(...selectedNodes.map(id => nodes.find(n => n.id === id)?.data.depth ?? 0)) + 1,
+          depth:
+            Math.max(
+              ...selectedNodes.map(
+                (id) => nodes.find((n) => n.id === id)?.data.depth ?? 0
+              )
+            ) + 1,
         },
         position: newPosition,
       };
@@ -709,7 +772,7 @@ function MindMapContent() {
       });
 
       if (!nodeResponse.ok) {
-        throw new Error('Failed to add suggested node to the database.');
+        throw new Error("Failed to add suggested node to the database.");
       }
 
       // Send add edges to backend
@@ -736,7 +799,7 @@ function MindMapContent() {
       // Optionally, auto-layout after adding the new node
       // setLayoutOnNextRender(true);
     } catch (err: any) {
-      console.error('Error getting suggestion:', err);
+      console.error("Error getting suggestion:", err);
     } finally {
       setIsSuggestLoading(false);
     }
@@ -758,13 +821,13 @@ function MindMapContent() {
       const response = await fetch('https://ideavine.onrender.com/write', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ nodes: allNodesData }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to generate essay');
+        throw new Error("Failed to generate essay");
       }
 
       const data = await response.json();
@@ -772,7 +835,7 @@ function MindMapContent() {
       setEssayContent(data.content);
       setIsSidebarOpen(true);
     } catch (err) {
-      console.error('Error generating essay:', err);
+      console.error("Error generating essay:", err);
     } finally {
       setIsWriteLoading(false);
     }
@@ -782,14 +845,18 @@ function MindMapContent() {
   const handleSearch = useCallback(() => {
     if (!searchTerm) return;
 
-    const matchingNodes = nodes.filter((node) =>
-      node.data.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      node.data.content.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchingNodes = nodes.filter(
+      (node) =>
+        node.data.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        node.data.content.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     if (matchingNodes.length > 0) {
       const firstMatch = matchingNodes[0];
-      setCenter(firstMatch.position.x, firstMatch.position.y, { zoom: 1.5, duration: 1000 });
+      setCenter(firstMatch.position.x, firstMatch.position.y, {
+        zoom: 1.5,
+        duration: 1000,
+      });
 
       // Highlight matching nodes
       setNodes((nds) =>
@@ -839,14 +906,16 @@ function MindMapContent() {
   // Start recording audio
   const startRecording = async () => {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      console.error('MediaDevices API not supported.');
+      console.error("MediaDevices API not supported.");
       return;
     }
 
     try {
       setIsRecordingLoading(true);
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = new MediaRecorder(stream, {
+        mimeType: "audio/webm",
+      });
       audioChunksRef.current = [];
 
       mediaRecorderRef.current.ondataavailable = (event) => {
@@ -856,7 +925,9 @@ function MindMapContent() {
       };
 
       mediaRecorderRef.current.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: "audio/webm",
+        });
         await handleAudioUpload(audioBlob);
       };
 
@@ -864,14 +935,17 @@ function MindMapContent() {
       setIsRecording(true);
       setIsRecordingLoading(false);
     } catch (err) {
-      console.error('Error accessing microphone:', err);
+      console.error("Error accessing microphone:", err);
       setIsRecordingLoading(false);
     }
   };
 
   // Stop recording audio
   const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
       setIsRecordingLoading(true);
       mediaRecorderRef.current.stop();
       setIsRecording(false);
@@ -882,7 +956,7 @@ function MindMapContent() {
   const handleAudioUpload = async (audioBlob: Blob) => {
     const formData = new FormData();
 
-    formData.append('audio_file', audioBlob, 'recording.webm');
+    formData.append("audio_file", audioBlob, "recording.webm");
 
     try {
       const response = await fetch('https://ideavine.onrender.com/process_audio', {
@@ -891,7 +965,7 @@ function MindMapContent() {
       });
 
       if (!response.ok) {
-        console.error('Failed to upload audio');
+        console.error("Failed to upload audio");
         return;
       }
 
@@ -907,7 +981,7 @@ function MindMapContent() {
       // Optionally, auto-layout after adding nodes
       setLayoutOnNextRender(true);
     } catch (err) {
-      console.error('Error uploading audio:', err);
+      console.error("Error uploading audio:", err);
       setIsRecordingLoading(false);
     }
   };
@@ -930,7 +1004,11 @@ function MindMapContent() {
 
         // Ensure the new ID is unique among existing node IDs
         while (existingNodeIds.has(newId)) {
-          newId = uniquePrefix + oldId + '-' + Math.random().toString(36).substr(2, 9);
+          newId =
+            uniquePrefix +
+            oldId +
+            "-" +
+            Math.random().toString(36).substr(2, 9);
         }
 
         idMap.set(oldId, newId);
@@ -946,7 +1024,7 @@ function MindMapContent() {
           ? Array.isArray(node.parents)
             ? node.parents.map((pid: string) => idMap.get(pid) || pid)
             : node.parents
-                .split(',')
+                .split(",")
                 .map((id: string) => id.trim())
                 .filter((id: string) => id.length > 0)
                 .map((id: string) => idMap.get(id) || id)
@@ -956,7 +1034,7 @@ function MindMapContent() {
           ? Array.isArray(node.children)
             ? node.children.map((cid: string) => idMap.get(cid) || cid)
             : node.children
-                .split(',')
+                .split(",")
                 .map((id: string) => id.trim())
                 .filter((id: string) => id.length > 0)
                 .map((id: string) => idMap.get(id) || id)
@@ -964,7 +1042,7 @@ function MindMapContent() {
 
         const reactFlowNode: Node<CustomNodeData> = {
           id: newId,
-          type: 'customNode',
+          type: "customNode",
           data: {
             title: node.title,
             content: node.content,
@@ -1003,7 +1081,7 @@ function MindMapContent() {
           });
 
           if (!response.ok) {
-            throw new Error('Failed to add node to the database.');
+            throw new Error("Failed to add node to the database.");
           }
         } catch (error: any) {
           console.error("Error adding backend node:", error);
@@ -1049,24 +1127,29 @@ function MindMapContent() {
   }, [layoutOnNextRender, onLayout]);
 
   return (
-    <NodeOperationsProvider nodes={nodes} setNodes={setNodes} edges={edges} setEdges={setEdges}>
+    <NodeOperationsProvider
+      nodes={nodes}
+      setNodes={setNodes}
+      edges={edges}
+      setEdges={setEdges}
+    >
       <SidebarProvider>
         <AppSidebar />
         <div className="w-full h-screen flex flex-col">
           {/* Top Bar */}
           <div className="relative flex items-center justify-between p-4 bg-background border-b">
-            <SidebarTrigger className="w-10 h-10" variant={'outline'} />
+            <SidebarTrigger className="w-10 h-10" variant={"outline"} />
             <div className="absolute left-1/2 transform -translate-x-1/2 max-w-[50%] md:max-w-[60%] lg:max-w-[70%]">
               <Input
                 className="text-center text-lg font-bold bg-transparent border-none outline-none p-0 m-0"
                 style={{
-                  width: 'auto',
-                  minWidth: '50px',
-                  maxWidth: '100%',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  padding: '10px',
+                  width: "auto",
+                  minWidth: "50px",
+                  maxWidth: "100%",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  padding: "10px",
                 }}
                 value={mapTitle}
                 onChange={(e) => setMapTitle(e.target.value)}
@@ -1080,9 +1163,9 @@ function MindMapContent() {
               </Button>
             ) : (
               <div className="flex gap-2">
-                <Button 
-                  onClick={handleRecording} 
-                  disabled={isRecordingLoading} 
+                <Button
+                  onClick={handleRecording}
+                  disabled={isRecordingLoading}
                   className="relative overflow-hidden"
                 >
                   {isRecordingLoading ? (
@@ -1101,7 +1184,7 @@ function MindMapContent() {
                     </>
                   )}
                 </Button>
-                <Button 
+                <Button
                   onClick={handleSuggest}
                   disabled={selectedNodes.length === 0 || isSuggestLoading}
                   className="relative overflow-hidden"
@@ -1117,9 +1200,9 @@ function MindMapContent() {
                     </>
                   )}
                 </Button>
-                <Button 
-                  onClick={handleWrite} 
-                  disabled={isWriteLoading} 
+                <Button
+                  onClick={handleWrite}
+                  disabled={isWriteLoading}
                   className="relative overflow-hidden"
                 >
                   {isWriteLoading ? (
@@ -1138,15 +1221,31 @@ function MindMapContent() {
           </div>
           {isMobile && isMenuOpen && (
             <div className="flex flex-col gap-2 p-4 bg-background border-b">
-              <Button onClick={handleRecording} disabled={isRecordingLoading} className="w-full justify-start">
-                {isRecording ? <StopCircle className="mr-2 h-4 w-4" /> : <Mic className="mr-2 h-4 w-4" />}
+              <Button
+                onClick={handleRecording}
+                disabled={isRecordingLoading}
+                className="w-full justify-start"
+              >
+                {isRecording ? (
+                  <StopCircle className="mr-2 h-4 w-4" />
+                ) : (
+                  <Mic className="mr-2 h-4 w-4" />
+                )}
                 {isRecording ? "Stop Recording" : "Start Recording"}
               </Button>
-              <Button onClick={handleSuggest} disabled={selectedNodes.length === 0 || isSuggestLoading} className="w-full justify-start">
+              <Button
+                onClick={handleSuggest}
+                disabled={selectedNodes.length === 0 || isSuggestLoading}
+                className="w-full justify-start"
+              >
                 <Lightbulb className="mr-2 h-4 w-4" />
                 Suggest
               </Button>
-              <Button onClick={handleWrite} disabled={isWriteLoading} className="w-full justify-start">
+              <Button
+                onClick={handleWrite}
+                disabled={isWriteLoading}
+                className="w-full justify-start"
+              >
                 <PenTool className="mr-2 h-4 w-4" />
                 Write
               </Button>
@@ -1155,7 +1254,11 @@ function MindMapContent() {
           {/* Main Content */}
           <div className="flex-grow overflow-hidden flex">
             {/* ReactFlow Container */}
-            <div className={`flex-grow transition-all duration-300 ${isSidebarOpen ? 'mr-96' : ''}`}>
+            <div
+              className={`flex-grow transition-all duration-300 ${
+                isSidebarOpen ? "mr-96" : ""
+              }`}
+            >
               <ReactFlow
                 nodes={nodes}
                 edges={edges}
@@ -1183,7 +1286,7 @@ function MindMapContent() {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
+                          if (e.key === "Enter") {
                             handleSearch();
                           }
                         }}
@@ -1207,13 +1310,17 @@ function MindMapContent() {
             {/* Sidebar for Generated Essay */}
             <div
               className={`fixed top-0 right-0 h-full w-96 bg-white shadow-lg transform transition-transform duration-300 ${
-                isSidebarOpen ? 'translate-x-0' : 'translate-x-full'
+                isSidebarOpen ? "translate-x-0" : "translate-x-full"
               }`}
             >
               <div className="p-4">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-lg font-bold">Generated Essay</h2>
-                  <Button variant="outline" size="sm" onClick={() => setIsSidebarOpen(false)}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsSidebarOpen(false)}
+                  >
                     <X className="h-6 w-6 text-black" />
                   </Button>
                 </div>
@@ -1224,8 +1331,9 @@ function MindMapContent() {
                   placeholder="Essay Title"
                   rows={1}
                   onInput={(e) => {
-                    e.currentTarget.style.height = 'auto';
-                    e.currentTarget.style.height = e.currentTarget.scrollHeight + 'px';
+                    e.currentTarget.style.height = "auto";
+                    e.currentTarget.style.height =
+                      e.currentTarget.scrollHeight + "px";
                   }}
                 />
                 <Textarea
@@ -1235,7 +1343,9 @@ function MindMapContent() {
                   placeholder="Essay Content"
                 />
                 <p className="text-xs text-gray-500 mt-2">
-                  This write feature is intended to help you understand and organize the ideas from your mind map. It should not be used as a substitute for your own creative writing and thought.
+                  This write feature is intended to help you understand and
+                  organize the ideas from your mind map. It should not be used
+                  as a substitute for your own creative writing and thought.
                 </p>
               </div>
             </div>
@@ -1243,7 +1353,7 @@ function MindMapContent() {
         </div>
       </SidebarProvider>
     </NodeOperationsProvider>
-);
+  );
 }
 
 // Exported MindMap Component wrapped with ReactFlowProvider and React Router hooks

@@ -1,48 +1,61 @@
 // LandingPage.tsx
 
-'use client'
+"use client";
 
-import React, { useState, useEffect } from 'react'
-import { motion, AnimatePresence, useAnimation } from 'framer-motion'
-import { Link as ScrollLink, Element } from 'react-scroll'
-import { Button } from "@/components/ui/button"
-import { SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
-import { Input } from "@/components/ui/input"
-import { Leaf, Brain, Zap, PenTool, Mic, ChevronRight, Check } from 'lucide-react'
-import ReactFlow, { Background, Controls, Node, Edge } from 'reactflow'
-import 'reactflow/dist/style.css'
-import { useInView } from 'react-intersection-observer'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ThemeProvider, ThemeToggle, useTheme } from './ThemeProvider'
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence, useAnimation } from "framer-motion";
+import { Link as ScrollLink, Element } from "react-scroll";
+import { Button } from "@/components/ui/button";
+import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
+import { Input } from "@/components/ui/input";
+import {
+  Leaf,
+  Brain,
+  Zap,
+  PenTool,
+  Mic,
+  ChevronRight,
+  Check,
+} from "lucide-react";
+import ReactFlow, { Background, Controls, Node, Edge } from "reactflow";
+import "reactflow/dist/style.css";
+import { useInView } from "react-intersection-observer";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ThemeProvider, ThemeToggle, useTheme } from "./ThemeProvider";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Card } from "@/components/ui/card"
-import { useNavigate } from 'react-router-dom'
-import { useUserInfo } from './context/UserContext'
+} from "@/components/ui/accordion";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Card } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
+import { useUserInfo } from "./context/UserContext";
 
 const initialNodes: Node[] = [
-  { id: '1', position: { x: 0, y: 0 }, data: { label: 'Main Idea' }, type: 'input' },
-  { id: '2', position: { x: -100, y: 100 }, data: { label: 'Subtopic 1' } },
-  { id: '3', position: { x: 100, y: 100 }, data: { label: 'Subtopic 2' } },
-  { id: '4', position: { x: -150, y: 200 }, data: { label: 'Detail 1' } },
-  { id: '5', position: { x: -50, y: 200 }, data: { label: 'Detail 2' } },
-  { id: '6', position: { x: 50, y: 200 }, data: { label: 'Detail 3' } },
-  { id: '7', position: { x: 150, y: 200 }, data: { label: 'Detail 4' } },
-]
+  {
+    id: "1",
+    position: { x: 0, y: 0 },
+    data: { label: "Main Idea" },
+    type: "input",
+  },
+  { id: "2", position: { x: -100, y: 100 }, data: { label: "Subtopic 1" } },
+  { id: "3", position: { x: 100, y: 100 }, data: { label: "Subtopic 2" } },
+  { id: "4", position: { x: -150, y: 200 }, data: { label: "Detail 1" } },
+  { id: "5", position: { x: -50, y: 200 }, data: { label: "Detail 2" } },
+  { id: "6", position: { x: 50, y: 200 }, data: { label: "Detail 3" } },
+  { id: "7", position: { x: 150, y: 200 }, data: { label: "Detail 4" } },
+];
 
 const initialEdges: Edge[] = [
-  { id: 'e1-2', source: '1', target: '2' },
-  { id: 'e1-3', source: '1', target: '3' },
-  { id: 'e2-4', source: '2', target: '4' },
-  { id: 'e2-5', source: '2', target: '5' },
-  { id: 'e3-6', source: '3', target: '6' },
-  { id: 'e3-7', source: '3', target: '7' },
-]
+  { id: "e1-2", source: "1", target: "2" },
+  { id: "e1-3", source: "1", target: "3" },
+  { id: "e2-4", source: "2", target: "4" },
+  { id: "e2-5", source: "2", target: "5" },
+  { id: "e3-6", source: "3", target: "6" },
+  { id: "e3-7", source: "3", target: "7" },
+];
 
 const features = [
   { icon: Brain, title: 'Intuitive Mind Mapping', description: 'Create and organize your ideas visually with our easy-to-use interface.' },
@@ -53,10 +66,11 @@ const features = [
 
 const testimonials = [
   {
-    name: 'Alex Johnson',
-    role: 'Product Manager',
-    content: 'IdeaVine has revolutionized our brainstorming sessions. It\'s intuitive, powerful, and the AI suggestions are spot-on!',
-    avatar: '/placeholder.svg?height=40&width=40',
+    name: "Alex Johnson",
+    role: "Product Manager",
+    content:
+      "IdeaVine has revolutionized our brainstorming sessions. It's intuitive, powerful, and the AI suggestions are spot-on!",
+    avatar: "/placeholder.svg?height=40&width=40",
   },
   {
     name: 'Sarah Lee',
@@ -70,7 +84,7 @@ const testimonials = [
     content: 'The voice recording feature is perfect for capturing ideas on the go. IdeaVine has become essential for planning my essays.',
     avatar: '/placeholder.svg?height=40&width=40',
   },
-]
+];
 
 const faqItems = [
   {
@@ -89,7 +103,7 @@ const faqItems = [
     question: 'Is my data secure?',
     answer: 'We take data security very seriously. All your mind maps and personal information are encrypted using TLS and AES-256 and stored securely. We never share your data with third parties.',
   },
-]
+];
 
 // ShootingStar component
 // ShootingStar component with trail effect
@@ -132,48 +146,48 @@ const ShootingStar: React.FC = () => {
 }
 
 function LandingPageContent() {
-  const [email, setEmail] = useState('')
-  const [isEmailValid, setIsEmailValid] = useState(true)
-  const [isSubmitted, setIsSubmitted] = useState(false)
-  const controls = useAnimation()
-  const [_, inView] = useInView()
-  const [activeTab, setActiveTab] = useState('mindmap')
-  const navigate = useNavigate()
-  const { theme } = useTheme()
+  const [email, setEmail] = useState("");
+  const [isEmailValid, setIsEmailValid] = useState(true);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const controls = useAnimation();
+  const [_, inView] = useInView();
+  const [activeTab, setActiveTab] = useState("mindmap");
+  const navigate = useNavigate();
+  const { theme } = useTheme();
 
-  const [nodes] = useState(initialNodes)
-  const [edges] = useState(initialEdges)
+  const [nodes] = useState(initialNodes);
+  const [edges] = useState(initialEdges);
 
   const [starCount, setStarCount] = useState(25)
 
   const { userEmail } = useUserInfo();
 
   const validateEmail = (email: string) => {
-    const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
-    return re.test(String(email).toLowerCase())
-  }
+    const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return re.test(String(email).toLowerCase());
+  };
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value)
-    setIsEmailValid(true)
-    setIsSubmitted(false)
-  }
+    setEmail(e.target.value);
+    setIsEmailValid(true);
+    setIsSubmitted(false);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (validateEmail(email)) {
-      setIsSubmitted(true)
+      setIsSubmitted(true);
       // Here you would typically send the email to your backend
     } else {
-      setIsEmailValid(false)
+      setIsEmailValid(false);
     }
-  }
+  };
 
   useEffect(() => {
     if (inView) {
-      controls.start('visible')
+      controls.start("visible");
     }
-  }, [controls, inView])
+  }, [controls, inView]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -238,16 +252,23 @@ function LandingPageContent() {
 
       const data = await response.json();
       const sortedMindmaps = data.mindmaps.sort(
-        (a: { updated_at: string | number | Date }, b: { updated_at: string | number | Date }) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        (
+          a: { updated_at: string | number | Date },
+          b: { updated_at: string | number | Date }
+        ) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
       );
       navigate(`/mindmap/${sortedMindmaps[0]._id}`);
     } catch (err: any) {
       console.error("Error fetching mindmaps:", err);
+    }
   };
-}
 
   return (
-    <div className={`min-h-screen bg-background text-foreground transition-colors duration-300 ${theme === 'dark' ? 'dark' : ''}`}>
+    <div
+      className={`min-h-screen bg-background text-foreground transition-colors duration-300 ${
+        theme === "dark" ? "dark" : ""
+      }`}
+    >
       {/* Add the dotted background to the entire page */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <ReactFlow
@@ -258,7 +279,7 @@ function LandingPageContent() {
           proOptions={{ hideAttribution: true }}
         >
           <Background
-            color={theme === 'dark' ? '#666' : '#000'}
+            color={theme === "dark" ? "#666" : "#000"}
             gap={16}
             size={1}
           />
@@ -316,15 +337,28 @@ function LandingPageContent() {
             <div className="flex items-center space-x-4">
               <ThemeToggle />
               <SignedOut>
-                <Button size="sm" className="rounded-full" onClick={() => navigate('/auth/sign-in')}>
+                <Button
+                  size="sm"
+                  className="rounded-full"
+                  onClick={() => navigate("/auth/sign-in")}
+                >
                   Sign In
                 </Button>
-                <Button size="sm" variant="outline" className="rounded-full" onClick={() => navigate('/auth/sign-up')}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="rounded-full"
+                  onClick={() => navigate("/auth/sign-up")}
+                >
                   Sign Up
                 </Button>
               </SignedOut>
               <SignedIn>
-                <Button size="sm" className="rounded-full" onClick={fetchMindmaps}>
+                <Button
+                  size="sm"
+                  className="rounded-full"
+                  onClick={fetchMindmaps}
+                >
                   Open Mind Maps
                 </Button>
                 <UserButton />
@@ -344,10 +378,12 @@ function LandingPageContent() {
               transition={{ duration: 0.5 }}
             >
               <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
-                Unleash Your Ideas with <span className="text-primary">IdeaVine</span>
+                Unleash Your Ideas with{" "}
+                <span className="text-primary">IdeaVine</span>
               </h1>
               <p className="mt-6 text-lg leading-8 text-muted-foreground">
-                Transform your thoughts into visual masterpieces. IdeaVine helps you capture, organize, and expand your ideas like never before.
+                Transform your thoughts into visual masterpieces. IdeaVine helps
+                you capture, organize, and expand your ideas like never before.
               </p>
               <div className="mt-10 flex items-center justify-center gap-x-6">
                 <Button size="lg" className="rounded-full" onClick={fetchMindmaps}>
@@ -362,7 +398,7 @@ function LandingPageContent() {
           </div>
         </div>
         <div className="absolute inset-0 -z-10">
-          <div className="h-full w-full" style={{ overflow: 'visible' }}>
+          <div className="h-full w-full" style={{ overflow: "visible" }}>
             <ReactFlow
               nodes={nodes}
               edges={edges}
@@ -380,9 +416,12 @@ function LandingPageContent() {
         <section className="py-16 sm:py-24">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Powerful Features to Boost Your Creativity</h2>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                Powerful Features to Boost Your Creativity
+              </h2>
               <p className="mt-4 text-lg text-muted-foreground">
-                IdeaVine combines cutting-edge technology with intuitive design to help you brainstorm and organize your thoughts effectively.
+                IdeaVine combines cutting-edge technology with intuitive design
+                to help you brainstorm and organize your thoughts effectively.
               </p>
             </div>
             <div className="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -397,8 +436,12 @@ function LandingPageContent() {
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary">
                     <feature.icon className="h-6 w-6 text-primary-foreground" />
                   </div>
-                  <h3 className="mt-4 text-lg font-semibold">{feature.title}</h3>
-                  <p className="mt-2 text-muted-foreground">{feature.description}</p>
+                  <h3 className="mt-4 text-lg font-semibold">
+                    {feature.title}
+                  </h3>
+                  <p className="mt-2 text-muted-foreground">
+                    {feature.description}
+                  </p>
                 </motion.div>
               ))}
             </div>
@@ -411,12 +454,19 @@ function LandingPageContent() {
         <section className="py-16 sm:py-24 bg-muted/50">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-2xl text-center mb-12">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">See IdeaVine in Action</h2>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                See IdeaVine in Action
+              </h2>
               <p className="mt-4 text-lg text-muted-foreground">
-                Experience the power and simplicity of IdeaVine with our interactive demo videos.
+                Experience the power and simplicity of IdeaVine with our
+                interactive demo videos.
               </p>
             </div>
-            <Tabs defaultValue="mindmap" className="w-full" onValueChange={setActiveTab}>
+            <Tabs
+              defaultValue="mindmap"
+              className="w-full"
+              onValueChange={setActiveTab}
+            >
               <TabsList className="grid w-full grid-cols-3 mb-8 bg-secondary">
                 <TabsTrigger value="mindmap" className="bg-secondary">Mind Mapping</TabsTrigger>
                 <TabsTrigger value="voice" className="bg-secondary">Voice Recording</TabsTrigger>
@@ -428,27 +478,57 @@ function LandingPageContent() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3  }}
+                  transition={{ duration: 0.3 }}
                 >
-                  <TabsContent value="mindmap" className="bg-card rounded-lg shadow-lg p-6">
-                    <h3 className="text-xl font-semibold mb-4">Create Your Mind Map</h3>
-                    <p className="mb-4">Watch how easy it is to create and organize your ideas with IdeaVine's intuitive interface.</p>
+                  <TabsContent
+                    value="mindmap"
+                    className="bg-card rounded-lg shadow-lg p-6"
+                  >
+                    <h3 className="text-xl font-semibold mb-4">
+                      Create Your Mind Map
+                    </h3>
+                    <p className="mb-4">
+                      Watch how easy it is to create and organize your ideas
+                      with IdeaVine's intuitive interface.
+                    </p>
                     <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                      <p className="text-muted-foreground">Mind Mapping Demo Video</p>
+                      <p className="text-muted-foreground">
+                        Mind Mapping Demo Video
+                      </p>
                     </div>
                   </TabsContent>
-                  <TabsContent value="suggestions" className="bg-card rounded-lg shadow-lg p-6">
-                    <h3 className="text-xl font-semibold mb-4">AI-Powered Suggestions</h3>
-                    <p className="mb-4">See how our AI analyzes your mind map and provides relevant suggestions to expand your ideas.</p>
+                  <TabsContent
+                    value="suggestions"
+                    className="bg-card rounded-lg shadow-lg p-6"
+                  >
+                    <h3 className="text-xl font-semibold mb-4">
+                      AI-Powered Suggestions
+                    </h3>
+                    <p className="mb-4">
+                      See how our AI analyzes your mind map and provides
+                      relevant suggestions to expand your ideas.
+                    </p>
                     <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                      <p className="text-muted-foreground">AI Suggestions Demo Video</p>
+                      <p className="text-muted-foreground">
+                        AI Suggestions Demo Video
+                      </p>
                     </div>
                   </TabsContent>
-                  <TabsContent value="voice" className="bg-card rounded-lg shadow-lg p-6">
-                    <h3 className="text-xl font-semibold mb-4">Voice Recording</h3>
-                    <p className="mb-4">Learn how to capture your ideas on the go with our voice recording feature.</p>
+                  <TabsContent
+                    value="voice"
+                    className="bg-card rounded-lg shadow-lg p-6"
+                  >
+                    <h3 className="text-xl font-semibold mb-4">
+                      Voice Recording
+                    </h3>
+                    <p className="mb-4">
+                      Learn how to capture your ideas on the go with our voice
+                      recording feature.
+                    </p>
                     <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                      <p className="text-muted-foreground">Voice Recording Demo Video</p>
+                      <p className="text-muted-foreground">
+                        Voice Recording Demo Video
+                      </p>
                     </div>
                   </TabsContent>
                 </motion.div>
@@ -463,9 +543,12 @@ function LandingPageContent() {
         <section className="py-16 sm:py-24">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-2xl text-center mb-12">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">What Our Users Say</h2>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                What Our Users Say
+              </h2>
               <p className="mt-4 text-lg text-muted-foreground">
-                Discover how IdeaVine is transforming the way people think and work.
+                Discover how IdeaVine is transforming the way people think and
+                work.
               </p>
             </div>
             <div className="grid gap-8 md:grid-cols-3">
@@ -477,15 +560,22 @@ function LandingPageContent() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5, delay: index * 0.1 }}
                 >
-                  <p className="text-muted-foreground mb-4">{testimonial.content}</p>
+                  <p className="text-muted-foreground mb-4">
+                    {testimonial.content}
+                  </p>
                   <div className="flex items-center">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={testimonial.avatar} alt={testimonial.name} />
+                      <AvatarImage
+                        src={testimonial.avatar}
+                        alt={testimonial.name}
+                      />
                       <AvatarFallback>{testimonial.name[0]}</AvatarFallback>
                     </Avatar>
                     <div className="ml-3">
                       <p className="font-semibold">{testimonial.name}</p>
-                      <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {testimonial.role}
+                      </p>
                     </div>
                   </div>
                 </motion.div>
@@ -500,7 +590,9 @@ function LandingPageContent() {
         <section className="py-16 sm:py-24 bg-background">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-2xl text-center mb-12">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Frequently Asked Questions</h2>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+                Frequently Asked Questions
+              </h2>
               <p className="mt-4 text-lg text-muted-foreground">
                 Find answers to common questions about IdeaVine.
               </p>
@@ -508,9 +600,15 @@ function LandingPageContent() {
             <div className="max-w-3xl mx-auto">
               <Accordion type="single" collapsible className="space-y-4">
                 {faqItems.map((item, index) => (
-                  <AccordionItem key={index} value={`item-${index}`} className="border rounded-lg overflow-hidden">
+                  <AccordionItem
+                    key={index}
+                    value={`item-${index}`}
+                    className="border rounded-lg overflow-hidden"
+                  >
                     <AccordionTrigger className="bg-card hover:bg-card/90 px-6 py-4 text-left">
-                      <span className="font-semibold text-lg">{item.question}</span>
+                      <span className="font-semibold text-lg">
+                        {item.question}
+                      </span>
                     </AccordionTrigger>
                     <AccordionContent className="bg-background px-6 py-4">
                       <Card className="p-4 bg-muted/50">
@@ -533,29 +631,41 @@ function LandingPageContent() {
               Ready to Transform Your Ideas?
             </h2>
             <p className="mt-4 text-lg text-primary-foreground/80">
-              Join thousands of creative thinkers and problem solvers. Start your journey with IdeaVine today.
+              Join thousands of creative thinkers and problem solvers. Start
+              your journey with IdeaVine today.
             </p>
-            <form onSubmit={handleSubmit} className="mt-8 flex flex-col items-center sm:flex-row sm:justify-center">
+            <form
+              onSubmit={handleSubmit}
+              className="mt-8 flex flex-col items-center sm:flex-row sm:justify-center"
+            >
               <Input
                 type="email"
                 placeholder="Enter your email"
                 value={email}
                 onChange={handleEmailChange}
-                className={`w-full sm:w-64 text-secondary rounded-full ${!isEmailValid ? 'border-red-500' : ''}`}
+                className={`w-full sm:w-64 text-secondary rounded-full ${
+                  !isEmailValid ? "border-red-500" : ""
+                }`}
               />
-              <Button type="submit" size="lg" className="mt-3 w-full sm:mt-0 sm:ml-3 sm:w-auto rounded-full">
+              <Button
+                type="submit"
+                size="lg"
+                className="mt-3 w-full sm:mt-0 sm:ml-3 sm:w-auto rounded-full"
+              >
                 {isSubmitted ? (
                   <>
                     <Check className="mr-2 h-4 w-4" />
                     Submitted
                   </>
                 ) : (
-                  'Get Early Access'
+                  "Get Early Access"
                 )}
               </Button>
             </form>
             {!isEmailValid && (
-              <p className="mt-2 text-sm text-red-400">Please enter a valid email address.</p>
+              <p className="mt-2 text-sm text-red-400">
+                Please enter a valid email address.
+              </p>
             )}
           </div>
         </div>
@@ -569,13 +679,46 @@ function LandingPageContent() {
               <Leaf className="h-8 w-8 text-primary" />
               <span className="ml-2 text-xl font-semibold">IdeaVine</span>
             </div>
-              <span className="text-muted-foreground">
-                An <a href="https://www.linkedin.com/in/shubhayan935" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">ss</a> and <a href="https://www.linkedin.com/in/vishnu-swarup-kadaba/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">vk</a> production
-              </span>
+            <span className="text-muted-foreground">
+              An{" "}
+              <a
+                href="https://www.linkedin.com/in/shubhayan935"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                ss
+              </a>{" "}
+              and{" "}
+              <a
+                href="https://www.linkedin.com/in/vishnu-swarup-kadaba/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                vk
+              </a>{" "}
+              production
+            </span>
             <nav className="mt-4 flex items-center space-x-4 sm:mt-0">
-              <a href="#" className="text-muted-foreground hover:text-foreground">Privacy</a>
-              <a href="#" className="text-muted-foreground hover:text-foreground">Terms</a>
-              <a href="#" className="text-muted-foreground hover:text-foreground">Contact</a>
+              <a
+                href="#"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Privacy
+              </a>
+              <a
+                href="#"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Terms
+              </a>
+              <a
+                href="#"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Contact
+              </a>
             </nav>
           </div>
           <div className="mt-8 text-center text-sm text-muted-foreground">
@@ -584,7 +727,7 @@ function LandingPageContent() {
         </div>
       </footer>
     </div>
-  )
+  );
 }
 
 export default function LandingPage() {
@@ -592,5 +735,5 @@ export default function LandingPage() {
     <ThemeProvider defaultTheme="dark">
       <LandingPageContent />
     </ThemeProvider>
-  )
+  );
 }

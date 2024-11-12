@@ -9,7 +9,6 @@ import json
 from utils import transcribe_audio, generate_nodes_from_transcription, synthesize_idea, send_to_openai, extract_and_parse_json
 from dotenv import load_dotenv
 from datetime import datetime
-from bson.errors import InvalidId
 from database.schema import (
     # Classes
     UserDB,
@@ -702,4 +701,5 @@ def write():
         return jsonify({'error': 'Failed to generate writing'}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port, debug=True)

@@ -8,7 +8,7 @@ import {
   Leaf,
   Palette,
   Trash2,
-  MoreVertical
+  MoreVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -64,10 +64,30 @@ interface ThemeOption {
 }
 
 const themeOptions: ThemeOption[] = [
-  { name: "light", primaryColor: "#ffffff", secondaryColor: "#000000", label: "Light" },
-  { name: "dark", primaryColor: "#1a1a1a", secondaryColor: "#ffffff", label: "Dark" },
-  { name: "beige", primaryColor: "#f5f5dc", secondaryColor: "#8b4513", label: "Beige" },
-  { name: "lavender", primaryColor: "#e6e6fa", secondaryColor: "#000000", label: "Lavender" },
+  {
+    name: "light",
+    primaryColor: "#ffffff",
+    secondaryColor: "#000000",
+    label: "Light",
+  },
+  {
+    name: "dark",
+    primaryColor: "#1a1a1a",
+    secondaryColor: "#ffffff",
+    label: "Dark",
+  },
+  {
+    name: "beige",
+    primaryColor: "#f5f5dc",
+    secondaryColor: "#8b4513",
+    label: "Beige",
+  },
+  {
+    name: "lavender",
+    primaryColor: "#e6e6fa",
+    secondaryColor: "#000000",
+    label: "Lavender",
+  },
 ];
 
 export const SidebarUpdateContext = createContext<{
@@ -100,14 +120,19 @@ export function AppSidebar() {
 
   const getUserInitials = () => {
     if (!userEmail) return "U";
-    const initials = `${firstName?.charAt(0) || ""}${lastName?.charAt(0) || ""}`.toUpperCase();
+    const initials = `${firstName?.charAt(0) || ""}${
+      lastName?.charAt(0) || ""
+    }`.toUpperCase();
     return initials || "U";
   };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedTheme = localStorage.getItem("theme") as Theme;
-      if (savedTheme && themeOptions.some((option) => option.name === savedTheme)) {
+      if (
+        savedTheme &&
+        themeOptions.some((option) => option.name === savedTheme)
+      ) {
         setTheme(savedTheme);
       } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
         setTheme("dark");
@@ -116,7 +141,9 @@ export function AppSidebar() {
   }, []);
 
   useEffect(() => {
-    document.documentElement.classList.remove(...themeOptions.map((option) => option.name));
+    document.documentElement.classList.remove(
+      ...themeOptions.map((option) => option.name)
+    );
     document.documentElement.classList.add(theme);
     localStorage.setItem("theme", theme);
   }, [theme]);
@@ -174,12 +201,14 @@ export function AppSidebar() {
     const fetchActiveMindmap = async () => {
       if (!userEmail) return;
       try {
-        if (mindmap_id){
+        if (mindmap_id) {
           setActiveItem(mindmap_id);
         }
       } catch (err: any) {
         console.error("Error fetching active mindmap:", err);
-        setError(err.message || "An error occurred while fetching the active mindmap.");
+        setError(
+          err.message || "An error occurred while fetching the active mindmap."
+        );
       } finally {
         setLoading(false);
       }
@@ -232,7 +261,11 @@ export function AppSidebar() {
 
         const data = await response.json();
         const sortedMindmaps = data.mindmaps.sort(
-          (a: { updated_at: string | number | Date; }, b: { updated_at: string | number | Date; }) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+          (
+            a: { updated_at: string | number | Date },
+            b: { updated_at: string | number | Date }
+          ) =>
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
         );
         setMindmaps(sortedMindmaps);
       } catch (err: any) {
@@ -253,15 +286,20 @@ export function AppSidebar() {
         headers: { "Content-Type": "application/json" },
       });
 
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || "Failed to delete mindmap");
       }
 
-      setMindmaps((prevMindmaps) => prevMindmaps.filter((map) => map._id !== mindmapId));
+      setMindmaps((prevMindmaps) =>
+        prevMindmaps.filter((map) => map._id !== mindmapId)
+      );
 
       if (activeItem === mindmapId) {
-        const remainingMindmaps = mindmaps.filter((map) => map._id !== mindmapId);
+        const remainingMindmaps = mindmaps.filter(
+          (map) => map._id !== mindmapId
+        );
         if (remainingMindmaps.length > 0) {
           const newActiveMap = remainingMindmaps[0];
           setActiveItem(newActiveMap._id);
@@ -289,7 +327,9 @@ export function AppSidebar() {
               <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary shadow-sm">
                 <Leaf className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="font-semibold text-xl tracking-tight">IdeaVine</span>
+              <span className="font-semibold text-xl tracking-tight">
+                IdeaVine
+              </span>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -329,7 +369,9 @@ export function AppSidebar() {
                           style={{ backgroundColor: option.secondaryColor }}
                         />
                       </div>
-                      <span className="text-sm font-medium">{option.label}</span>
+                      <span className="text-sm font-medium">
+                        {option.label}
+                      </span>
                     </div>
                   </DropdownMenuItem>
                 ))}
@@ -403,11 +445,13 @@ export function AppSidebar() {
                                   : "text-foreground"
                               )}
                             >
-                            <div className="flex-1 min-w-0 mr-2">
-                              <div className="flex flex-row items-center justify-between">
-                                <span className="font-medium">{item.title}</span>
-                              </div>
-                              {/* <div className="flex items-center gap-3 text-xs">
+                              <div className="flex-1 min-w-0 mr-2">
+                                <div className="flex flex-row items-center justify-between">
+                                  <span className="font-medium">
+                                    {item.title}
+                                  </span>
+                                </div>
+                                {/* <div className="flex items-center gap-3 text-xs">
                                 <div className="flex items-center gap-1.5">
                                   <Calendar className="h-3.5 w-3.5" />
                                   {new Date(item.created_at).toLocaleDateString()}
@@ -429,7 +473,9 @@ export function AppSidebar() {
                                       "h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100",
                                       "focus:opacity-100 active:opacity-100",
                                       "transition-opacity",
-                                      activeItem === item._id ? "text-primary" : "text-muted-foreground"
+                                      activeItem === item._id
+                                        ? "text-primary"
+                                        : "text-muted-foreground"
                                     )}
                                   >
                                     <MoreVertical className="h-3.5 w-3.5" />

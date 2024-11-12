@@ -1,13 +1,13 @@
 // AuthPage.tsx
 
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Card,
   CardContent,
@@ -15,30 +15,24 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import {
-  Leaf,
-  Mail,
-  Lock,
-  User,
-  ArrowRight,
-  Eye,
-  EyeOff
-} from 'lucide-react';
-import { useSignIn, useSignUp } from '@clerk/clerk-react';
-import { useNavigate } from 'react-router-dom';
+} from "@/components/ui/card";
+import { Leaf, Mail, Lock, User, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { useSignIn, useSignUp } from "@clerk/clerk-react";
+import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid"; // Import UUID
 
 export default function AuthPage() {
   // Define active tab: 'login', 'signup', or 'forgotPassword'
-  const [activeTab, setActiveTab] = useState<'login' | 'signup' | 'forgotPassword'>('login');
+  const [activeTab, setActiveTab] = useState<
+    "login" | "signup" | "forgotPassword"
+  >("login");
 
   // Form states
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [emailAddress, setEmailAddress] = useState('');
-  const [password, setPassword] = useState('');
-  const [verificationCode, setVerificationCode] = useState('');
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [emailAddress, setEmailAddress] = useState("");
+  const [password, setPassword] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
   const [errors, setErrors] = useState<string[]>([]);
   const [isVerifying, setIsVerifying] = useState(false);
   const [successfulReset, setSuccessfulReset] = useState(false);
@@ -53,19 +47,27 @@ export default function AuthPage() {
   const [signupPasswordError, setSignupPasswordError] = useState(false);
   const [resetPasswordError, setResetPasswordError] = useState(false);
 
-  const { isLoaded: isSignInLoaded, signIn, setActive: setActiveSignIn } = useSignIn();
-  const { isLoaded: isSignUpLoaded, signUp, setActive: setActiveSignUp } = useSignUp();
+  const {
+    isLoaded: isSignInLoaded,
+    signIn,
+    setActive: setActiveSignIn,
+  } = useSignIn();
+  const {
+    isLoaded: isSignUpLoaded,
+    signUp,
+    setActive: setActiveSignUp,
+  } = useSignUp();
   const navigate = useNavigate();
 
   // Function to handle tab changes and reset relevant states
-  const handleSetActiveTab = (value: 'login' | 'signup' | 'forgotPassword') => {
+  const handleSetActiveTab = (value: "login" | "signup" | "forgotPassword") => {
     setActiveTab(value);
     setErrors([]);
-    setEmailAddress('');
-    setPassword('');
-    setFirstName('');
-    setLastName('');
-    setVerificationCode('');
+    setEmailAddress("");
+    setPassword("");
+    setFirstName("");
+    setLastName("");
+    setVerificationCode("");
     setIsVerifying(false);
     setSuccessfulReset(false);
     setLoginPasswordVisible(false);
@@ -81,7 +83,7 @@ export default function AuthPage() {
     e.preventDefault();
     setErrors([]);
 
-    if (activeTab === 'login') {
+    if (activeTab === "login") {
       if (!isSignInLoaded) return;
       try {
         const result = await signIn.create({
@@ -89,25 +91,25 @@ export default function AuthPage() {
           password,
         });
 
-        if (result.status === 'complete') {
+        if (result.status === "complete") {
           await setActiveSignIn({ session: result.createdSessionId });
-          navigate('/mindmap');
+          navigate("/mindmap");
         } else {
-          setErrors(['Sign-in incomplete.']);
+          setErrors(["Sign-in incomplete."]);
         }
       } catch (err: any) {
         console.error(err);
         // Check if error relates to password
-        if (err.errors && err.errors[0].code === 'invalid_credentials') {
+        if (err.errors && err.errors[0].code === "invalid_credentials") {
           setLoginPasswordError(true);
         }
         setErrors(
           err.errors
             ? err.errors.map((error: any) => error.longMessage)
-            : ['An error occurred during sign-in.']
+            : ["An error occurred during sign-in."]
         );
       }
-    } else if (activeTab === 'signup') {
+    } else if (activeTab === "signup") {
       if (!isSignUpLoaded) return;
       try {
         // Step 1: Create the sign-up with email and password
@@ -130,28 +132,28 @@ export default function AuthPage() {
       } catch (err: any) {
         console.error(err);
         // Check if error relates to password
-        if (err.errors && err.errors[0].code === 'password_too_short') {
+        if (err.errors && err.errors[0].code === "password_too_short") {
           setSignupPasswordError(true);
         }
         setErrors(
           err.errors
             ? err.errors.map((error: any) => error.longMessage)
-            : ['An error occurred during sign-up.']
+            : ["An error occurred during sign-up."]
         );
       }
-    } else if (activeTab === 'forgotPassword') {
+    } else if (activeTab === "forgotPassword") {
       if (!isSignInLoaded) return;
       try {
         await signIn.create({
-          strategy: 'reset_password_email_code',
+          strategy: "reset_password_email_code",
           identifier: emailAddress,
         });
         setSuccessfulReset(true);
-        setErrors(['A password reset code has been sent to your email.']);
+        setErrors(["A password reset code has been sent to your email."]);
       } catch (err: any) {
-        console.error('error', err.errors[0].longMessage);
+        console.error("error", err.errors[0].longMessage);
         // Check if error relates to user not found
-        if (err.errors && err.errors[0].code === 'user_not_found') {
+        if (err.errors && err.errors[0].code === "user_not_found") {
           setLoginPasswordError(true);
         }
         setErrors([err.errors[0].longMessage]);
@@ -165,21 +167,21 @@ export default function AuthPage() {
     if (!isSignInLoaded) return;
     try {
       const result = await signIn.attemptFirstFactor({
-        strategy: 'reset_password_email_code',
+        strategy: "reset_password_email_code",
         code: verificationCode,
         password,
       });
 
-      if (result.status === 'needs_second_factor') {
+      if (result.status === "needs_second_factor") {
         setErrors([]);
-      } else if (result.status === 'complete') {
+      } else if (result.status === "complete") {
         await setActiveSignIn({ session: result.createdSessionId });
-        navigate('/mindmap');
+        navigate("/mindmap");
       }
     } catch (err: any) {
-      console.error('error', err.errors[0].longMessage);
+      console.error("error", err.errors[0].longMessage);
       // Check if error relates to password
-      if (err.errors && err.errors[0].code === 'invalid_password') {
+      if (err.errors && err.errors[0].code === "invalid_password") {
         setResetPasswordError(true);
       }
       setErrors([err.errors[0].longMessage]);
@@ -195,22 +197,22 @@ export default function AuthPage() {
       const completeSignUp = await signUp.attemptEmailAddressVerification({
         code: verificationCode,
       });
-      if (completeSignUp.status === 'complete') {
+      if (completeSignUp.status === "complete") {
         await setActiveSignUp({ session: completeSignUp.createdSessionId! });
-        
+
         // After successful sign-up and email verification, create the user in MongoDB
         await createUserInBackend();
 
-        navigate('/mindmap');
+        navigate("/mindmap");
       } else {
-        setErrors(['Verification failed. Please try again.']);
+        setErrors(["Verification failed. Please try again."]);
       }
     } catch (err: any) {
       console.error(err);
       setErrors(
         err.errors
           ? err.errors.map((error: any) => error.longMessage)
-          : ['An error occurred during verification.']
+          : ["An error occurred during verification."]
       );
     }
   };
@@ -221,7 +223,7 @@ export default function AuthPage() {
       // Retrieve the Clerk user ID
       const clerkUserId = signUp?.createdUserId;
       if (!clerkUserId) {
-        throw new Error('Clerk user ID not found.');
+        throw new Error("Clerk user ID not found.");
       }
 
       // Prepare user data
@@ -236,7 +238,7 @@ export default function AuthPage() {
       const response = await fetch('https://ideavine.onrender.com/users', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           // Include authentication headers if your backend requires them
           // 'Authorization': `Bearer YOUR_BACKEND_AUTH_TOKEN`
         },
@@ -245,13 +247,15 @@ export default function AuthPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create user in backend.');
+        throw new Error(errorData.error || "Failed to create user in backend.");
       }
 
       await createBlankMindmap(emailAddress);
     } catch (error: any) {
-      console.error('Error creating user in backend:', error);
-      setErrors([error.message || 'An error occurred while creating your account.']);
+      console.error("Error creating user in backend:", error);
+      setErrors([
+        error.message || "An error occurred while creating your account.",
+      ]);
     }
   };
 
@@ -259,8 +263,8 @@ export default function AuthPage() {
     const blankMindmap = {
       mindmap_id: uuidv4(),
       user_email: userEmail,
-      title: 'Untitled Mindmap',
-      description: 'Start your mind map here.',
+      title: "Untitled Mindmap",
+      description: "Start your mind map here.",
       nodes: [],
     };
 
@@ -272,11 +276,10 @@ export default function AuthPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create blank mindmap.');
+        throw new Error("Failed to create blank mindmap.");
       }
-
     } catch (error) {
-      console.error('Error creating blank mindmap:', error);
+      console.error("Error creating blank mindmap:", error);
     }
   };
 
@@ -288,8 +291,8 @@ export default function AuthPage() {
   };
 
   const pageTransition = {
-    type: 'tween',
-    ease: 'anticipate',
+    type: "tween",
+    ease: "anticipate",
     duration: 0.5,
   };
 
@@ -300,7 +303,9 @@ export default function AuthPage() {
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Verify Your Email</CardTitle>
-            <CardDescription>Enter the verification code sent to your email</CardDescription>
+            <CardDescription>
+              Enter the verification code sent to your email
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleVerification}>
@@ -340,7 +345,9 @@ export default function AuthPage() {
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Reset Your Password</CardTitle>
-            <CardDescription>Enter the code sent to your email and your new password</CardDescription>
+            <CardDescription>
+              Enter the code sent to your email and your new password
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handlePasswordReset}>
@@ -358,7 +365,7 @@ export default function AuthPage() {
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="password"
-                      type={resetPasswordVisible ? 'text' : 'password'}
+                      type={resetPasswordVisible ? "text" : "password"}
                       placeholder="••••••••"
                       value={password}
                       onChange={(e) => {
@@ -366,16 +373,18 @@ export default function AuthPage() {
                         if (resetPasswordError) setResetPasswordError(false);
                       }}
                       className={`pl-10 pr-10 ${
-                        resetPasswordError ? 'border-red-500' : ''
+                        resetPasswordError ? "border-red-500" : ""
                       }`}
                       required
                     />
                     <button
                       type="button"
-                      onClick={() => setResetPasswordVisible(!resetPasswordVisible)}
+                      onClick={() =>
+                        setResetPasswordVisible(!resetPasswordVisible)
+                      }
                       className="absolute right-3 top-3 text-muted-foreground bg-transparent p-0 focus:outline-none"
                       aria-label={
-                        resetPasswordVisible ? 'Hide password' : 'Show password'
+                        resetPasswordVisible ? "Hide password" : "Show password"
                       }
                     >
                       {resetPasswordVisible ? (
@@ -426,26 +435,30 @@ export default function AuthPage() {
                 animate={{ rotate: 360 }}
                 transition={{
                   duration: 2,
-                  ease: 'easeInOut',
+                  ease: "easeInOut",
                   repeat: Infinity,
-                  repeatType: 'reverse',
+                  repeatType: "reverse",
                 }}
               >
                 <Leaf className="h-12 w-12" />
               </motion.div>
             </div>
-            <CardTitle className="text-2xl font-bold text-center">Welcome to IdeaVine</CardTitle>
+            <CardTitle className="text-2xl font-bold text-center">
+              Welcome to IdeaVine
+            </CardTitle>
             <CardDescription className="text-center text-primary-foreground/70">
-              {activeTab === 'login' && 'Sign in to your account'}
-              {activeTab === 'signup' && 'Create a new account'}
-              {activeTab === 'forgotPassword' && 'Reset your password'}
+              {activeTab === "login" && "Sign in to your account"}
+              {activeTab === "signup" && "Create a new account"}
+              {activeTab === "forgotPassword" && "Reset your password"}
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6">
             <Tabs
               value={activeTab}
               onValueChange={(value) =>
-                handleSetActiveTab(value as 'login' | 'signup' | 'forgotPassword')
+                handleSetActiveTab(
+                  value as "login" | "signup" | "forgotPassword"
+                )
               }
               className="w-full"
             >
@@ -466,7 +479,7 @@ export default function AuthPage() {
                   variants={pageVariants}
                   transition={pageTransition}
                 >
-                  {activeTab === 'login' && (
+                  {activeTab === "login" && (
                     <form onSubmit={handleSubmit}>
                       <div className="space-y-4">
                         {errors.length > 0 && (
@@ -497,24 +510,29 @@ export default function AuthPage() {
                             <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                             <Input
                               id="password"
-                              type={loginPasswordVisible ? 'text' : 'password'}
+                              type={loginPasswordVisible ? "text" : "password"}
                               placeholder="••••••••"
                               value={password}
                               onChange={(e) => {
                                 setPassword(e.target.value);
-                                if (loginPasswordError) setLoginPasswordError(false);
+                                if (loginPasswordError)
+                                  setLoginPasswordError(false);
                               }}
                               className={`pl-10 pr-10 ${
-                                loginPasswordError ? 'border-red-500' : ''
+                                loginPasswordError ? "border-red-500" : ""
                               }`}
                               required
                             />
                             <button
                               type="button"
-                              onClick={() => setLoginPasswordVisible(!loginPasswordVisible)}
+                              onClick={() =>
+                                setLoginPasswordVisible(!loginPasswordVisible)
+                              }
                               className="absolute right-3 top-3 text-muted-foreground bg-transparent p-0 focus:outline-none"
                               aria-label={
-                                loginPasswordVisible ? 'Hide password' : 'Show password'
+                                loginPasswordVisible
+                                  ? "Hide password"
+                                  : "Show password"
                               }
                             >
                               {loginPasswordVisible ? (
@@ -529,7 +547,7 @@ export default function AuthPage() {
                           <button
                             type="button"
                             className="text-sm text-primary bg-transparent hover:underline p-0"
-                            onClick={() => handleSetActiveTab('forgotPassword')}
+                            onClick={() => handleSetActiveTab("forgotPassword")}
                           >
                             Forgot Password?
                           </button>
@@ -554,7 +572,7 @@ export default function AuthPage() {
                       </div>
                     </form>
                   )}
-                  {activeTab === 'signup' && (
+                  {activeTab === "signup" && (
                     <form onSubmit={handleSubmit}>
                       <div className="space-y-4">
                         {errors.length > 0 && (
@@ -612,24 +630,29 @@ export default function AuthPage() {
                             <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                             <Input
                               id="password"
-                              type={signupPasswordVisible ? 'text' : 'password'}
+                              type={signupPasswordVisible ? "text" : "password"}
                               placeholder="••••••••"
                               value={password}
                               onChange={(e) => {
                                 setPassword(e.target.value);
-                                if (signupPasswordError) setSignupPasswordError(false);
+                                if (signupPasswordError)
+                                  setSignupPasswordError(false);
                               }}
                               className={`pl-10 pr-10 ${
-                                signupPasswordError ? 'border-red-500' : ''
+                                signupPasswordError ? "border-red-500" : ""
                               }`}
                               required
                             />
                             <button
                               type="button"
-                              onClick={() => setSignupPasswordVisible(!signupPasswordVisible)}
+                              onClick={() =>
+                                setSignupPasswordVisible(!signupPasswordVisible)
+                              }
                               className="absolute right-3 top-3 text-muted-foreground bg-transparent m-0 p-0 focus:outline-none"
                               aria-label={
-                                signupPasswordVisible ? 'Hide password' : 'Show password'
+                                signupPasswordVisible
+                                  ? "Hide password"
+                                  : "Show password"
                               }
                             >
                               {signupPasswordVisible ? (
@@ -660,7 +683,7 @@ export default function AuthPage() {
                       </div>
                     </form>
                   )}
-                  {activeTab === 'forgotPassword' && (
+                  {activeTab === "forgotPassword" && (
                     <form onSubmit={handleSubmit}>
                       <div className="space-y-4">
                         {errors.length > 0 && (
@@ -700,18 +723,18 @@ export default function AuthPage() {
           </CardContent>
           <CardFooter className="flex flex-col items-center bg-muted p-6">
             <p className="text-sm text-muted-foreground mb-2">
-              {activeTab === 'login' && "Don't have an account?"}
-              {activeTab === 'signup' && 'Already have an account?'}
-              {activeTab === 'forgotPassword' && 'Remember your password?'}
+              {activeTab === "login" && "Don't have an account?"}
+              {activeTab === "signup" && "Already have an account?"}
+              {activeTab === "forgotPassword" && "Remember your password?"}
             </p>
             <Button
               variant="ghost"
               onClick={() =>
-                handleSetActiveTab(activeTab === 'login' ? 'signup' : 'login')
+                handleSetActiveTab(activeTab === "login" ? "signup" : "login")
               }
               className="text-sm text-secondary bg-primary hover:bg-secondary"
             >
-              {activeTab === 'login' ? 'Create an account' : 'Sign in'}
+              {activeTab === "login" ? "Create an account" : "Sign in"}
             </Button>
           </CardFooter>
         </Card>
