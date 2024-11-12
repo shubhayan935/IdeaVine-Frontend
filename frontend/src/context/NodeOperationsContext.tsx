@@ -89,7 +89,7 @@ export const NodeOperationsProvider = ({
 
         setEdges((eds) => addEdge(newEdge, eds));
 
-        const response = await fetch(`http://127.0.0.1:5000/mindmaps/${mindmap_id}`, {
+        const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap_id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -123,7 +123,7 @@ export const NodeOperationsProvider = ({
   const updateNodeInDB = useCallback(
     async (node: Partial<CustomNodeData>) => {
       try {
-        const response = await fetch(`http://127.0.0.1:5000/mindmaps/${mindmap_id}`, {
+        const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap_id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -155,7 +155,7 @@ export const NodeOperationsProvider = ({
   const deleteNodeFromDB = useCallback(
     async (nodeId: string) => {
       try {
-        const response = await fetch(`http://127.0.0.1:5000/mindmaps/${mindmap_id}`, {
+        const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap_id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

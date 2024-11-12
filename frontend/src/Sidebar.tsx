@@ -147,7 +147,7 @@ export function AppSidebar() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch("http://127.0.0.1:5000/mindmaps", {
+      const response = await fetch("https://ideavine.onrender.com/mindmaps", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestBody),
@@ -196,7 +196,7 @@ export function AppSidebar() {
       setError(null);
 
       try {
-        const response = await fetch(`http://127.0.0.1:5000/users/lookup`, {
+        const response = await fetch(`https://ideavine.onrender.com/users/lookup`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: userEmail }),
@@ -220,7 +220,7 @@ export function AppSidebar() {
 
     const fetchMindmapsByUid = async (userUid: string) => {
       try {
-        const response = await fetch(`http://127.0.0.1:5000/users/${userUid}/mindmaps`, {
+        const response = await fetch(`https://ideavine.onrender.com/users/${userUid}/mindmaps`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
         });
@@ -248,7 +248,7 @@ export function AppSidebar() {
 
   const handleDeleteMindmap = async (mindmapId: string) => {
     try {
-      const response = await fetch(`http://127.0.0.1:5000/mindmaps/${mindmapId}`, {
+      const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmapId}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
       });
