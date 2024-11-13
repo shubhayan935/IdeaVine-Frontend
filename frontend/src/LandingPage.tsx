@@ -61,7 +61,7 @@ const testimonials = [
   },
   {
     name: 'Calix Huang',
-    role: 'Entreprenuer (YC W24)',
+    role: 'Entrepreneur (YC W23)',
     content: 'As a visual thinker, IdeaVine is a game-changer. It helps me organize my thoughts in a way that makes sense to me and my team.',
     avatar: '/placeholder.svg?height=40&width=40',
   },
