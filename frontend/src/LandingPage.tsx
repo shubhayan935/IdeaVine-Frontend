@@ -24,6 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card } from "@/components/ui/card"
 import { useNavigate } from 'react-router-dom'
 import { useUserInfo } from './context/UserContext'
+import { cn } from "@/lib/utils"
 
 const initialNodes: Node[] = [
   { id: '1', position: { x: 0, y: 0 }, data: { label: 'Main Idea' }, type: 'input' },
@@ -146,9 +147,75 @@ function LandingPageContent() {
   const [nodes] = useState(initialNodes)
   const [edges] = useState(initialEdges)
 
+  const [mindmaps, setMindmaps] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const { userEmail } = useUserInfo();
+
+  useEffect(() => {
+    if (userEmail) {
+      preFetchMindmaps();
+    }
+  }, [userEmail]);
+
   const [starCount, setStarCount] = useState(25)
 
-  const { userEmail } = useUserInfo();
+  const preFetchMindmaps = async () => {
+    if (!userEmail) return;
+
+    try {
+      setIsLoading(true);
+      const response = await fetch(`https://ideavine.onrender.com/users/lookup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email: userEmail }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch user UID");
+      }
+
+      const data = await response.json();
+      const userUid = data.user._id;
+
+      const mindmapsResponse = await fetch(
+        `https://ideavine.onrender.com/users/${userUid}/mindmaps`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (!mindmapsResponse.ok) {
+        throw new Error("Failed to fetch mindmaps");
+      }
+
+      const mindmapsData = await mindmapsResponse.json();
+      const sortedMindmaps = mindmapsData.mindmaps.sort(
+        (a: { updated_at: string | number | Date }, b: { updated_at: string | number | Date }) => 
+          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      );
+
+      setMindmaps(sortedMindmaps);
+    } catch (err: any) {
+      console.error("Error pre-fetching mindmaps:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const openMindmaps = () => {
+    if (mindmaps.length > 0) {
+      navigate(`/mindmap/${mindmaps[0]._id}`);
+    } else {
+      // If no mindmaps are available, you might want to create a new one or show a message
+      console.log("No mindmaps available");
+    }
+  };
+
 
   const validateEmail = (email: string) => {
     const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
@@ -189,64 +256,7 @@ function LandingPageContent() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
-
-  const fetchMindmaps = async () => {
-    if (!userEmail) return;
-
-    try {
-      const response = await fetch(`https://ideavine.onrender.com/users/lookup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          // Include authentication headers if required by backend
-          // 'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ email: userEmail }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch user UID");
-      }
-
-      const data = await response.json();
-      const userUid = data.user._id;
-
-      // After getting userUid, fetch mindmaps
-      await fetchMindmapsByUid(userUid);
-    } catch (err: any) {
-      console.error("Error fetching user UID:", err);
-    }
-  };
-
-  const fetchMindmapsByUid = async (userUid: string) => {
-    try {
-      const response = await fetch(
-        `https://ideavine.onrender.com/users/${userUid}/mindmaps`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            // Include authentication headers if required by backend
-            // 'Authorization': `Bearer ${token}`
-          },
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to fetch mindmaps");
-      }
-
-      const data = await response.json();
-      const sortedMindmaps = data.mindmaps.sort(
-        (a: { updated_at: string | number | Date }, b: { updated_at: string | number | Date }) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-      );
-      navigate(`/mindmap/${sortedMindmaps[0]._id}`);
-    } catch (err: any) {
-      console.error("Error fetching mindmaps:", err);
-  };
-}
+  
 
   return (
     <div className={`min-h-screen bg-background text-foreground transition-colors duration-300 ${theme === 'dark' ? 'dark' : ''}`}>
@@ -326,8 +336,13 @@ function LandingPageContent() {
                 </Button>
               </SignedOut>
               <SignedIn>
-                <Button size="sm" className="rounded-full" onClick={fetchMindmaps}>
-                  Open Mind Maps
+                <Button 
+                  size="sm" 
+                  className="rounded-full" 
+                  onClick={openMindmaps}
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Loading...' : 'Open Mind Maps'}
                 </Button>
                 <UserButton />
               </SignedIn>
@@ -352,10 +367,27 @@ function LandingPageContent() {
                 Transform your thoughts into visual masterpieces. IdeaVine helps you capture, organize, and expand your ideas like never before.
               </p>
               <div className="mt-10 flex items-center justify-center gap-x-6">
-                <Button size="lg" className="rounded-full" onClick={fetchMindmaps}>
-                  Get Started
-                  <ChevronRight className="ml-2 h-4 w-4" />
-                </Button>
+              <SignedIn>
+                  <Button 
+                    size="lg" 
+                    className={cn("rounded-full", "select-none")}
+                    onClick={openMindmaps}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Loading...' : 'Get Started'}
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </SignedIn>
+                <SignedOut>
+                  <Button 
+                    size="lg" 
+                    className={cn("rounded-full", "select-none")}
+                    onClick={() => navigate('/auth/sign-in')}
+                  >
+                    Get Started
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </SignedOut>
                 <Button variant="outline" size="lg" className="rounded-full">
                   Watch Demo
                 </Button>
