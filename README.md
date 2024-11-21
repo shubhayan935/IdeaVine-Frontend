@@ -2,10 +2,6 @@
 
 **AI-Enabled Mindmap Generation & Suggestion Tool**
 
----
-
-FOR GOOGLE LABS JUDGES: We have decided to move forward and potentially spin this idea into a creative startup! Thus, you might see recent commits.
-
 ## **Table of Contents**
 
 - [Introduction](#introduction)
