@@ -37,6 +37,8 @@ import {
   X,
   Search,
   Menu,
+  Leaf,
+  Share2,
 } from "lucide-react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar, SidebarUpdateContext } from "./Sidebar";
@@ -45,6 +47,17 @@ import { useMediaQuery } from "react-responsive";
 import { useUserInfo } from "./context/UserContext";
 import { useParams, useNavigate } from "react-router-dom";
 import { deriveEdgesFromNodes } from "./utils/deriveEdges";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Label } from "@/components/ui/label"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
   NodeOperationsProvider,
   NodeOperationsContext,
@@ -290,6 +303,9 @@ function MindMapContent() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isMobile = useMediaQuery({ maxWidth: 768 });
   const isTablet = useMediaQuery({ minWidth: 769, maxWidth: 1024 });
+
+  const [sharePermission, setSharePermission] = useState('view')
+  const [shareLink, setShareLink] = useState('')
 
   // Utility functions to manage node operations
   // const addNodeToAddList = (node: any) => {
@@ -1126,6 +1142,15 @@ function MindMapContent() {
     }
   }, [layoutOnNextRender, onLayout]);
 
+  const handleShareLinkCopy = () => {
+    navigator.clipboard.writeText(shareLink)
+    console.log(`link copied: ${shareLink}`)
+    // toast({
+    //   title: "Link copied",
+    //   description: "The share link has been copied to your clipboard.",
+    // })
+  }
+
   return (
     <NodeOperationsProvider
       nodes={nodes}
@@ -1134,11 +1159,19 @@ function MindMapContent() {
       setEdges={setEdges}
     >
       <SidebarProvider>
-        <AppSidebar />
+        {/* <AppSidebar /> */}
         <div className="w-full h-screen flex flex-col">
           {/* Top Bar */}
           <div className="relative flex items-center justify-between p-4 bg-background border-b">
-            <SidebarTrigger className="w-10 h-10" variant={"outline"} />
+            <a href="/mindmap">
+              <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary shadow-sm">
+                    <Leaf className="h-4 w-4 text-primary-foreground" />
+                  </div>
+                  <span className="font-semibold text-xl tracking-tight">IdeaVine</span>
+              </div>
+            </a>
+            {/* <SidebarTrigger className="w-10 h-10" variant={"outline"} /> */}
             <div className="absolute left-1/2 transform -translate-x-1/2 max-w-[50%] md:max-w-[60%] lg:max-w-[70%]">
               <Input
                 className="text-center text-lg font-bold bg-transparent border-none outline-none p-0 m-0"
@@ -1163,6 +1196,53 @@ function MindMapContent() {
               </Button>
             ) : (
               <div className="flex gap-2">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline">
+                      <Share2 className="mr-2 h-4 w-4" />
+                      Share
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Share mindmap</DialogTitle>
+                      <DialogDescription>
+                        Anyone with the link can view this mindmap.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex items-center space-x-2">
+                      <div className="grid flex-1 gap-2">
+                        <Label htmlFor="link" className="sr-only">
+                          Link
+                        </Label>
+                        <Input
+                          id="link"
+                          defaultValue={shareLink}
+                          readOnly
+                        />
+                      </div>
+                      <Button type="submit" size="sm" className="px-3" onClick={handleShareLinkCopy}>
+                        <span className="sr-only">Copy</span>
+                        Copy link
+                      </Button>
+                    </div>
+                    <RadioGroup defaultValue={sharePermission} onValueChange={setSharePermission}>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="view" id="r1" />
+                        <Label htmlFor="r1">Can view</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="edit" id="r2" />
+                        <Label htmlFor="r2">Can edit</Label>
+                      </div>
+                    </RadioGroup>
+                    <DialogFooter className="sm:justify-start">
+                      <Button type="button" variant="secondary" onClick={handleShareLinkCopy}>
+                        Copy link
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
                 <Button
                   onClick={handleRecording}
                   disabled={isRecordingLoading}
