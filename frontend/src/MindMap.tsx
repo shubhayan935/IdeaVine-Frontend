@@ -23,7 +23,9 @@ import ReactFlow, {
   XYPosition,
 } from "reactflow";
 import "reactflow/dist/style.css";
+import { useTheme } from 'next-themes'
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -39,7 +41,19 @@ import {
   Menu,
   Leaf,
   Share2,
+  Sun,
+  Moon,
+  LogOut,
+  Settings,
+  Upload,
+  FileUp,
 } from "lucide-react";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar, SidebarUpdateContext } from "./Sidebar";
 import { v4 as uuidv4 } from "uuid";
@@ -62,6 +76,7 @@ import {
   NodeOperationsProvider,
   NodeOperationsContext,
 } from "./context/NodeOperationsContext";
+import { useClerk } from '@clerk/clerk-react'
 
 // Define the structure of your custom node data
 interface CustomNodeData {
@@ -296,7 +311,7 @@ function MindMapContent() {
 
   const [searchTerm, setSearchTerm] = useState("");
 
-  const { userEmail } = useUserInfo(); // Access userEmail from context
+  const { userEmail, firstName, lastName } = useUserInfo(); // Access userEmail from context
   const { mindmap_id } = useParams<{ mindmap_id: string }>(); // Extract mindmap_id from URL
   const navigate = useNavigate();
 
@@ -304,8 +319,42 @@ function MindMapContent() {
   const isMobile = useMediaQuery({ maxWidth: 768 });
   const isTablet = useMediaQuery({ minWidth: 769, maxWidth: 1024 });
 
-  const [sharePermission, setSharePermission] = useState('view')
+  const [sharePermission, setSharePermission] = useState('edit')
   const [shareLink, setShareLink] = useState('')
+
+  // const { theme, setTheme } = useTheme();
+  const { signOut } = useClerk()
+
+  const [uploadType, setUploadType] = useState<"PDF" | "Video" | "Audio" | "Image" | null>(null)
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
+
+  const handleUpload = (type: "PDF" | "Video" | "Audio" | "Image") => {
+    setUploadType(type)
+    setIsUploadDialogOpen(true)
+  }
+
+  const handleFileUpload = (files: FileList | null) => {
+    if (files && files.length > 0) {
+      const file = files[0]
+      const fileSizeLimit = {
+        PDF: 100 * 1024 * 1024, // 100MB
+        Video: 100 * 1024 * 1024, // 100MB
+        Audio: 50 * 1024 * 1024, // 50MB
+        Image: 20 * 1024 * 1024, // 20MB
+      }[uploadType!]
+
+      if (file.size > fileSizeLimit) {
+        alert(`File size exceeds the limit of ${fileSizeLimit / (1024 * 1024)}MB`)
+        return
+      }
+
+      // Here you would handle the file upload to your backend
+      console.log(`Uploading ${uploadType} file:`, file.name)
+      
+      // Close the dialog after upload
+      setIsUploadDialogOpen(false)
+    }
+  }
 
   // Utility functions to manage node operations
   // const addNodeToAddList = (node: any) => {
@@ -1151,6 +1200,17 @@ function MindMapContent() {
     // })
   }
 
+  const getUserInitials = () => {
+    if (!userEmail) return "U"
+    const initials = `${firstName?.charAt(0) || ""}${lastName?.charAt(0) || ""}`.toUpperCase()
+    return initials || "U"
+  }
+
+  const handleLogout = async () => {
+    await signOut()
+    navigate('/')
+  }
+
   return (
     <NodeOperationsProvider
       nodes={nodes}
@@ -1195,10 +1255,10 @@ function MindMapContent() {
                 <Menu className="h-6 w-6" />
               </Button>
             ) : (
-              <div className="flex gap-2">
+              <div className="flex items-center space-x-4">
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="outline">
+                    <Button variant="outline" className="bg-primary text-background">
                       <Share2 className="mr-2 h-4 w-4" />
                       Share
                     </Button>
@@ -1243,94 +1303,43 @@ function MindMapContent() {
                     </DialogFooter>
                   </DialogContent>
                 </Dialog>
-                <Button
-                  onClick={handleRecording}
-                  disabled={isRecordingLoading}
-                  className="relative overflow-hidden"
-                >
-                  {isRecordingLoading ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-primary">
-                      <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin"></div>
-                    </div>
-                  ) : isRecording ? (
-                    <>
-                      <StopCircle className="mr-2 h-4 w-4 animate-pulse" />
-                      {!isTablet && "Stop Recording"}
-                    </>
-                  ) : (
-                    <>
-                      <Mic className="mr-2 h-4 w-4" />
-                      {!isTablet && "Start Recording"}
-                    </>
-                  )}
-                </Button>
-                <Button
-                  onClick={handleSuggest}
-                  disabled={selectedNodes.length === 0 || isSuggestLoading}
-                  className="relative overflow-hidden"
-                >
-                  {isSuggestLoading ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-primary">
-                      <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin"></div>
-                    </div>
-                  ) : (
-                    <>
-                      <Lightbulb className="mr-2 h-4 w-4" />
-                      {!isTablet && "Suggest"}
-                    </>
-                  )}
-                </Button>
-                <Button
-                  onClick={handleWrite}
-                  disabled={isWriteLoading}
-                  className="relative overflow-hidden"
-                >
-                  {isWriteLoading ? (
-                    <div className="absolute inset-0 flex items-center justify-center bg-primary">
-                      <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin"></div>
-                    </div>
-                  ) : (
-                    <>
-                      <PenTool className="mr-2 h-4 w-4" />
-                      {!isTablet && "Write"}
-                    </>
-                  )}
-                </Button>
+                {/* <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+                  {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                </Button> */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem>
+                      <span className="font-medium">
+                        {firstName ? `${firstName} ${lastName || ""}` : userEmail}
+                      </span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex flex-col items-start">
+                      <span className="text-xs text-muted-foreground" style={{
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        maxWidth: "200px"
+                      }}>{userEmail}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Log out</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             )}
           </div>
-          {isMobile && isMenuOpen && (
-            <div className="flex flex-col gap-2 p-4 bg-background border-b">
-              <Button
-                onClick={handleRecording}
-                disabled={isRecordingLoading}
-                className="w-full justify-start"
-              >
-                {isRecording ? (
-                  <StopCircle className="mr-2 h-4 w-4" />
-                ) : (
-                  <Mic className="mr-2 h-4 w-4" />
-                )}
-                {isRecording ? "Stop Recording" : "Start Recording"}
-              </Button>
-              <Button
-                onClick={handleSuggest}
-                disabled={selectedNodes.length === 0 || isSuggestLoading}
-                className="w-full justify-start"
-              >
-                <Lightbulb className="mr-2 h-4 w-4" />
-                Suggest
-              </Button>
-              <Button
-                onClick={handleWrite}
-                disabled={isWriteLoading}
-                className="w-full justify-start"
-              >
-                <PenTool className="mr-2 h-4 w-4" />
-                Write
-              </Button>
-            </div>
-          )}
           {/* Main Content */}
           <div className="flex-grow overflow-hidden flex">
             {/* ReactFlow Container */}
@@ -1356,10 +1365,80 @@ function MindMapContent() {
                 <Controls />
                 <Background />
                 <MiniMap position="bottom-right" />
+                <Panel position="top-left">
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleRecording}
+                      disabled={isRecordingLoading}
+                      className="relative overflow-hidden"
+                    >
+                      {isRecordingLoading ? (
+                        <div className="absolute inset-0 flex items-center justify-center bg-primary">
+                          <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin"></div>
+                        </div>
+                      ) : isRecording ? (
+                        <>
+                          <StopCircle className="mr-2 h-4 w-4 animate-pulse" />
+                          Stop
+                        </>
+                      ) : (
+                        <>
+                          <Mic className="mr-2 h-4 w-4" />
+                          Record
+                        </>
+                      )}
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button>
+                          <Upload className="mr-2 h-4 w-4" />
+                          Upload
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem onSelect={() => handleUpload("PDF")}>PDF</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleUpload("Video")}>Video</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleUpload("Audio")}>Audio</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleUpload("Image")}>Image</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Button
+                      onClick={handleSuggest}
+                      disabled={selectedNodes.length === 0 || isSuggestLoading}
+                      className="relative overflow-hidden"
+                    >
+                      {isSuggestLoading ? (
+                        <div className="absolute inset-0 flex items-center justify-center bg-primary">
+                          <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin"></div>
+                        </div>
+                      ) : (
+                        <>
+                          <Lightbulb className="mr-2 h-4 w-4" />
+                          Suggest
+                        </>
+                      )}
+                    </Button>
+                    <Button
+                      onClick={handleWrite}
+                      disabled={isWriteLoading}
+                      className="relative overflow-hidden"
+                    >
+                      {isWriteLoading ? (
+                        <div className="absolute inset-0 flex items-center justify-center bg-primary">
+                          <div className="w-5 h-5 border-t-2 border-white rounded-full animate-spin"></div>
+                        </div>
+                      ) : (
+                        <>
+                          <PenTool className="mr-2 h-4 w-4" />
+                          Write
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </Panel>
                 <Panel position="top-right">
-                  <div className="flex gap-2 items-center">
-                    {/* Search Input */}
-                    <div className="relative w-full">
+                  <div className="flex gap-2">
+                    <div className="relative">
                       <Input
                         type="text"
                         placeholder="Search nodes..."
@@ -1367,21 +1446,22 @@ function MindMapContent() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") {
-                            handleSearch();
+                            handleSearch()
                           }
                         }}
-                        className="pr-10 w-full"
+                        className="pr-10"
                       />
                       <Button
                         onClick={handleSearch}
-                        className="absolute inset-y-0 right-0 px-2 items-center text-secondary bg-primary"
+                        className="absolute inset-y-0 right-0 px-2 flex items-center"
                       >
                         <Search className="h-4 w-4" />
                       </Button>
                     </div>
-                    {/* Add Node Button */}
-                    <Button onClick={onAddNodeManually}>Add Node</Button>
-                    {/* Auto Layout Button */}
+                    <Button onClick={onAddNodeManually}>
+                      <Plus className="mr-0 h-4 w-4" />
+                      Add Node
+                    </Button>
                     <Button onClick={onLayout}>Auto Layout</Button>
                   </div>
                 </Panel>
@@ -1430,6 +1510,29 @@ function MindMapContent() {
               </div>
             </div>
           </div>
+          <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Upload {uploadType}</DialogTitle>
+                <DialogDescription>
+                  Please upload your {uploadType} not larger than {
+                    uploadType === "PDF" || uploadType === "Video" ? "100MB" :
+                    uploadType === "Audio" ? "50MB" : "20MB"
+                  }
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex items-center justify-center w-full">
+                <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 dark:hover:bg-bray-800 dark:bg-gray-700 hover:bg-gray-100 dark:border-gray-600 dark:hover:border-gray-500 dark:hover:bg-gray-600">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <FileUp className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" />
+                    <p className="mb-2 text-sm text-gray-500 dark:text-gray-400"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                    {/* <p className="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF (MAX. 800x400px)</p> */}
+                  </div>
+                  <input id="dropzone-file" type="file" className="hidden" onChange={(e) => handleFileUpload(e.target.files)} />
+                </label>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </SidebarProvider>
     </NodeOperationsProvider>
