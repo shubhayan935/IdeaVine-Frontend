@@ -47,6 +47,10 @@ import {
   Settings,
   Upload,
   FileUp,
+  FileText, 
+  Video, 
+  Music, 
+  Image
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -397,6 +401,7 @@ function MindMapContent() {
           }
 
           const data = await response.json();
+          console.log(data);
           const fetchedNodes: Node<CustomNodeData>[] = data.nodes.map(
             (node: any) => ({
               id: node._id,
@@ -833,6 +838,8 @@ function MindMapContent() {
           parents: newNode.data.parents,
           children: newNode.data.children,
           depth: newNode.data.depth,
+          node_type: "ai_suggested",
+          source: "ai_synthesis",
         }]}),
       });
 
@@ -1037,7 +1044,7 @@ function MindMapContent() {
       const data = await response.json();
       const nodesFromBackend = data.nodes;
 
-      const { newNodes, newEdges } = processBackendNodes(nodesFromBackend);
+      const { newNodes, newEdges } = processBackendNodes(nodesFromBackend, "audio_generated", "audio_transcription");
 
       setNodes((nds) => [...nds, ...newNodes]);
       setEdges((eds) => [...eds, ...newEdges]);
@@ -1051,9 +1058,9 @@ function MindMapContent() {
     }
   };
 
-  // Process nodes received from backend after audio processing or suggestion
+  // Process nodes received from backend after audio processing
   const processBackendNodes = useCallback(
-    (backendNodes: any[]) => {
+    (backendNodes: any[], nodeType: string, nodeSource: string) => {
       const newNodes: Node<CustomNodeData>[] = [];
       const nodeMap = new Map<string, Node<CustomNodeData>>();
 
@@ -1124,6 +1131,7 @@ function MindMapContent() {
       // Derive edges from the new nodes
       const derivedEdges = deriveEdgesFromNodes(newNodes);
 
+      console.log(`nodeType is ${nodeType} and nodeSource is ${nodeSource}`)
       // Send new nodes to backend
       newNodes.forEach(async (node) => {
         try {
@@ -1142,6 +1150,8 @@ function MindMapContent() {
               parents: node.data.parents,
               children: node.data.children,
               depth: node.data.depth,
+              node_type: nodeType,
+              source: nodeSource,
             }]}),
           });
 
@@ -1396,10 +1406,22 @@ function MindMapContent() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                        <DropdownMenuItem onSelect={() => handleUpload("PDF")}>PDF</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handleUpload("Video")}>Video</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handleUpload("Audio")}>Audio</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => handleUpload("Image")}>Image</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleUpload("PDF")}>
+                        <FileText className="mr-2 h-4 w-4" />
+                        PDF
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleUpload("Video")}>
+                        <Video className="mr-2 h-4 w-4" />
+                        Video
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleUpload("Audio")}>
+                        <Music className="mr-2 h-4 w-4" />
+                        Audio
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleUpload("Image")}>
+                        <Image className="mr-2 h-4 w-4" />
+                        Image
+                      </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                     <Button

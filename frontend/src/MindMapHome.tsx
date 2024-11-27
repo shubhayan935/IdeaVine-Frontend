@@ -56,7 +56,10 @@ export default function IdeaVineIntegratedDashboard() {
       if (!mindmapsResponse.ok) throw new Error("Failed to fetch mindmaps")
 
       const mindmapsData = await mindmapsResponse.json()
-      setMindmaps(mindmapsData.mindmaps)
+      const sortedMindmaps = mindmapsData.mindmaps.sort((a: Mindmap, b: Mindmap) => 
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      )
+      setMindmaps(sortedMindmaps)
     } catch (err) {
       console.error("Error fetching mindmaps:", err)
     }
