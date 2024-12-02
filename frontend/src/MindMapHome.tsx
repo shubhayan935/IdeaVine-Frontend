@@ -1,18 +1,18 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Leaf, Search, Plus, MoreHorizontal, Trash2, LogOut, Settings, Moon, Sun } from 'lucide-react'
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Leaf, Search, Trash2, LogOut } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { useUserInfo } from './context/UserContext'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useClerk } from '@clerk/clerk-react'
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { AppSidebar, SidebarUpdateContext } from './Sidebar'
+import { AppSidebar } from './Sidebar'
 import { SidebarProvider } from './components/ui/sidebar'
 
 interface Mindmap {

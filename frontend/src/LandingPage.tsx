@@ -23,7 +23,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card } from "@/components/ui/card"
 import { useNavigate } from 'react-router-dom'
-import { useUserInfo } from './context/UserContext'
 import { cn } from "@/lib/utils"
 
 const initialNodes: Node[] = [
@@ -146,8 +145,6 @@ function LandingPageContent() {
 
   const [nodes] = useState(initialNodes)
   const [edges] = useState(initialEdges)
-
-  const [mindmaps, setMindmaps] = useState<any[]>([])
   // const [isLoading, setIsLoading] = useState(false)
   // const { userEmail } = useUserInfo();
 

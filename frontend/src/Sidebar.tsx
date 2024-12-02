@@ -1,24 +1,16 @@
 'use client'
 
-import React, { useState, useEffect, createContext, useContext } from 'react'
-import { Search, LogOut, Plus, Leaf, Palette, Trash2, MoreVertical, FolderOpen, Users, Star, Home, User2 } from 'lucide-react'
+import { useState, useEffect, createContext } from 'react'
+import { Plus, Leaf, Palette ,Users, Home, User2 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarHeader,
-  SidebarFooter,
 } from "@/components/ui/sidebar"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,8 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useClerk } from "@clerk/clerk-react"
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useUserInfo } from './context/UserContext'
 
 interface Mindmap {
@@ -74,17 +65,15 @@ export const SidebarUpdateContext = createContext<{
 })
 
 export function AppSidebar() {
-  const [activeItem, setActiveItem] = useState<string | null>(null)
-  const [searchTerm, setSearchTerm] = useState("")
+  const [___, setActiveItem] = useState<string | null>(null)
+  const [____, _] = useState("")
   const [theme, setTheme] = useState<Theme>("light")
-  const [mindmaps, setMindmaps] = useState<Mindmap[]>([])
+  const [______, setMindmaps] = useState<Mindmap[]>([])
   const [loading, setLoading] = useState<boolean>(false)
-  const [error, setError] = useState<string | null>(null)
+  const [__, setError] = useState<string | null>(null)
   const [activeFilter, setActiveFilter] = useState('all')
-
-  const { signOut } = useClerk()
   const navigate = useNavigate()
-  const { userEmail, firstName, lastName } = useUserInfo()
+  const { userEmail } = useUserInfo()
 
   const updateSidebarTitle = (mindmapId: string, newTitle: string) => {
     setMindmaps((prevMindmaps) =>
@@ -94,11 +83,11 @@ export function AppSidebar() {
     )
   }
 
-  const getUserInitials = () => {
-    if (!userEmail) return "U"
-    const initials = `${firstName?.charAt(0) || ""}${lastName?.charAt(0) || ""}`.toUpperCase()
-    return initials || "U"
-  }
+  // const getUserInitials = () => {
+  //   if (!userEmail) return "U"
+  //   const initials = `${firstName?.charAt(0) || ""}${lastName?.charAt(0) || ""}`.toUpperCase()
+  //   return initials || "U"
+  // }
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -117,14 +106,14 @@ export function AppSidebar() {
     localStorage.setItem("theme", theme)
   }, [theme])
 
-  const handleLogout = async () => {
-    try {
-      await signOut()
-      navigate("/")
-    } catch (error) {
-      console.error("Error logging out:", error)
-    }
-  }
+  // const handleLogout = async () => {
+  //   try {
+  //     await signOut()
+  //     navigate("/")
+  //   } catch (error) {
+  //     console.error("Error logging out:", error)
+  //   }
+  // }
 
   const handleCreateMindmap = async () => {
     if (!userEmail) return
@@ -215,39 +204,39 @@ export function AppSidebar() {
     fetchMindmaps()
   }, [userEmail])
 
-  const handleDeleteMindmap = async (mindmapId: string) => {
-    try {
-      const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmapId}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-      })
+  // const handleDeleteMindmap = async (mindmapId: string) => {
+  //   try {
+  //     const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmapId}`, {
+  //       method: "DELETE",
+  //       headers: { "Content-Type": "application/json" },
+  //     })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || "Failed to delete mindmap")
-      }
+  //     if (!response.ok) {
+  //       const errorData = await response.json()
+  //       throw new Error(errorData.error || "Failed to delete mindmap")
+  //     }
 
-      setMindmaps((prevMindmaps) => prevMindmaps.filter((map) => map._id !== mindmapId))
+  //     setMindmaps((prevMindmaps) => prevMindmaps.filter((map) => map._id !== mindmapId))
 
-      if (activeItem === mindmapId) {
-        const remainingMindmaps = mindmaps.filter((map) => map._id !== mindmapId)
-        if (remainingMindmaps.length > 0) {
-          const newActiveMap = remainingMindmaps[0]
-          setActiveItem(newActiveMap._id)
-          navigate(`/mindmap/${newActiveMap._id}`)
-        } else {
-          // This is the last mindmap, create a new one
-          await handleCreateMindmap()
-        }
-      }
-    } catch (err: any) {
-      console.error("Error deleting mindmap:", err.message)
-    }
-  }
+  //     if (activeItem === mindmapId) {
+  //       const remainingMindmaps = mindmaps.filter((map) => map._id !== mindmapId)
+  //       if (remainingMindmaps.length > 0) {
+  //         const newActiveMap = remainingMindmaps[0]
+  //         setActiveItem(newActiveMap._id)
+  //         navigate(`/mindmap/${newActiveMap._id}`)
+  //       } else {
+  //         // This is the last mindmap, create a new one
+  //         await handleCreateMindmap()
+  //       }
+  //     }
+  //   } catch (err: any) {
+  //     console.error("Error deleting mindmap:", err.message)
+  //   }
+  // }
 
-  const filteredMindmaps = mindmaps.filter((item) =>
-    item.title.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  // const filteredMindmaps = mindmaps.filter((item) =>
+  //   item.title.toLowerCase().includes(searchTerm.toLowerCase())
+  // )
 
   const menuItems = [
     { id: 'all', label: 'All projects', icon: Home },

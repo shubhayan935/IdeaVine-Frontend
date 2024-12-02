@@ -23,9 +23,8 @@ import ReactFlow, {
   XYPosition,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import { useTheme } from 'next-themes'
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -40,24 +39,24 @@ import {
   Search,
   Menu,
   Leaf,
-  Share2,
-  Sun,
-  Moon,
+  // Share2,
+  // Sun,
+  // Moon,
   LogOut,
   Settings,
-  Upload,
-  FileUp,
+  // Upload,
+  // FileUp,
   FileText, 
   Video, 
-  Music, 
+  // Music, 
   Image,
-  File,
-  HelpCircle,
-  Mail,
-  Lock,
-  ChevronDown,
-  Link2,
-  Globe,
+  // File,
+  // HelpCircle,
+  // Mail,
+  // Lock,
+  // ChevronDown,
+  // Link2,
+  // Globe,
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -65,25 +64,14 @@ import {
   DropdownMenuItem, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu"
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { AppSidebar, SidebarUpdateContext } from "./Sidebar";
+import { SidebarUpdateContext } from "./Sidebar";
 import { v4 as uuidv4 } from "uuid";
 import { useMediaQuery } from "react-responsive";
 import { useUserInfo } from "./context/UserContext";
 import { useParams, useNavigate } from "react-router-dom";
 import { deriveEdgesFromNodes } from "./utils/deriveEdges";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
   NodeOperationsProvider,
   NodeOperationsContext,
@@ -104,7 +92,7 @@ interface CustomNodeData {
   source?: string;
 }
 
-const SourceIndicator: React.FC<{ type: string; source: string }> = ({ type, source }) => {
+const SourceIndicator: React.FC<{ type: string; source: string }> = ({ source }) => {
   let Icon = Lightbulb;
   let bgColor = 'bg-gray-200';
   let tooltipContent = 'Node source unknown';
@@ -356,13 +344,13 @@ const nodeTypes = {
   customNode: CustomNode,
 };
 
-interface SharedUsers {
-  id: string
-  name: string
-  email: string
-  role: 'Owner' | 'Editor' | 'Viewer'
-  isCurrentUser?: boolean
-}
+// interface SharedUsers {
+//   id: string
+//   name: string
+//   email: string
+//   role: 'Owner' | 'Editor' | 'Viewer'
+//   isCurrentUser?: boolean
+// }
 
 // Main MindMapContent Component
 function MindMapContent() {
@@ -398,60 +386,60 @@ function MindMapContent() {
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const isMobile = useMediaQuery({ maxWidth: 768 });
-  const isTablet = useMediaQuery({ minWidth: 769, maxWidth: 1024 });
+  // const isTablet = useMediaQuery({ minWidth: 769, maxWidth: 1024 });
 
-  const [isOpen, setIsOpen] = useState(false)
-  const [accessLevel, setAccessLevel] = useState<'Restricted' | 'Anyone with the link'>('Restricted')
-  const [sharedUsers, setSharedUsers] = useState<SharedUsers[]>([
-    {
-      id: '1',
-      name: 'Shubhayan Srivastava',
-      email: 'shubhaya@usc.edu',
-      role: 'Owner',
-      isCurrentUser: true
-    },
-    {
-      id: '2',
-      name: 'Vishnu Kadaba',
-      email: 'vkadaba@usc.edu',
-      role: 'Editor'
-    }
-  ])
+  // const [isOpen, setIsOpen] = useState(false)
+  // const [accessLevel, setAccessLevel] = useState<'Restricted' | 'Anyone with the link'>('Restricted')
+  // const [sharedUsers, setSharedUsers] = useState<SharedUsers[]>([
+  //   {
+  //     id: '1',
+  //     name: 'Shubhayan Srivastava',
+  //     email: 'shubhaya@usc.edu',
+  //     role: 'Owner',
+  //     isCurrentUser: true
+  //   },
+  //   {
+  //     id: '2',
+  //     name: 'Vishnu Kadaba',
+  //     email: 'vkadaba@usc.edu',
+  //     role: 'Editor'
+  //   }
+  // ])
 
   // const { theme, setTheme } = useTheme();
   const { signOut } = useClerk()
 
-  const [uploadType, setUploadType] = useState<"PDF" | "Video" | "Audio" | "Image" | "Document" | null>(null)
-  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
+  // const [uploadType, setUploadType] = useState<"PDF" | "Video" | "Audio" | "Image" | "Document" | null>(null)
+  // // const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
 
-  const handleUpload = (type: "PDF" | "Video" | "Audio" | "Image" | "Document") => {
-    setUploadType(type)
-    setIsUploadDialogOpen(true)
-  }
+  // // const handleUpload = (type: "PDF" | "Video" | "Audio" | "Image" | "Document") => {
+  // //   setUploadType(type)
+  // //   setIsUploadDialogOpen(true)
+  // // }
 
-  const handleFileUpload = (files: FileList | null) => {
-    if (files && files.length > 0) {
-      const file = files[0]
-      const fileSizeLimit = {
-        PDF: 100 * 1024 * 1024, // 100MB
-        Video: 100 * 1024 * 1024, // 100MB
-        Audio: 50 * 1024 * 1024, // 50MB
-        Image: 20 * 1024 * 1024, // 20MB
-        Document: 100 * 1024 * 1024 // 100MB
-      }[uploadType!]
+  // // const handleFileUpload = (files: FileList | null) => {
+  // //   if (files && files.length > 0) {
+  // //     const file = files[0]
+  // //     const fileSizeLimit = {
+  // //       PDF: 100 * 1024 * 1024, // 100MB
+  // //       Video: 100 * 1024 * 1024, // 100MB
+  // //       Audio: 50 * 1024 * 1024, // 50MB
+  // //       Image: 20 * 1024 * 1024, // 20MB
+  // //       Document: 100 * 1024 * 1024 // 100MB
+  // //     }[uploadType!]
 
-      if (file.size > fileSizeLimit) {
-        alert(`File size exceeds the limit of ${fileSizeLimit / (1024 * 1024)}MB`)
-        return
-      }
+  // //     if (file.size > fileSizeLimit) {
+  // //       alert(`File size exceeds the limit of ${fileSizeLimit / (1024 * 1024)}MB`)
+  // //       return
+  // //     }
 
-      // Here you would handle the file upload to your backend
-      console.log(`Uploading ${uploadType} file:`, file.name)
+  // //     // Here you would handle the file upload to your backend
+  // //     console.log(`Uploading ${uploadType} file:`, file.name)
       
-      // Close the dialog after upload
-      setIsUploadDialogOpen(false)
-    }
-  }
+  // //     // Close the dialog after upload
+  // //     setIsUploadDialogOpen(false)
+  // //   }
+  // // }
 
   // Utility functions to manage node operations
   // const addNodeToAddList = (node: any) => {
@@ -1316,25 +1304,25 @@ function MindMapContent() {
     navigate('/')
   }
 
-  const handleClose = () => {
-    setIsOpen(false)
-  }
+  // const handleClose = () => {
+  //   setIsOpen(false)
+  // }
 
-  const handleRoleChange = (userId: string, newRole: 'Editor' | 'Viewer' | null) => {
-    setSharedUsers(currentUsers => 
-      currentUsers.filter(user => {
-        if (user.id === userId) {
-          return newRole !== null // Remove user if newRole is null
-        }
-        return true
-      }).map(user => {
-        if (user.id === userId && newRole) {
-          return { ...user, role: newRole }
-        }
-        return user
-      })
-    )
-  }
+  // const handleRoleChange = (userId: string, newRole: 'Editor' | 'Viewer' | null) => {
+  //   setSharedUsers(currentUsers => 
+  //     currentUsers.filter(user => {
+  //       if (user.id === userId) {
+  //         return newRole !== null // Remove user if newRole is null
+  //       }
+  //       return true
+  //     }).map(user => {
+  //       if (user.id === userId && newRole) {
+  //         return { ...user, role: newRole }
+  //       }
+  //       return user
+  //     })
+  //   )
+  // }
 
   return (
     <NodeOperationsProvider
