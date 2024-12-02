@@ -15,14 +15,14 @@ interface CustomNodeData {
   depth: number;
   isHighlighted?: boolean;
   position?: XYPosition | undefined;
+  node_type?: string;
+  source?: string;
 }
 
 interface NodeOperationsContextProps {
   addNodeToDB: (
     parentId: string,
     position: "top" | "bottom" | "left" | "right",
-    nodeType?: "manual" | "audio_generated" | "ai_suggested",
-    nodeSource?: "user_input" | "audio_transcription" | "ai_synthesis",
   ) => Promise<void>;
   updateNodeInDB: (node: Partial<CustomNodeData>) => Promise<void>;
   deleteNodeFromDB: (nodeId: string) => Promise<void>;
@@ -50,7 +50,7 @@ export const NodeOperationsProvider = ({
   const { userEmail } = useUserInfo();
 
   const addNodeToDB = useCallback(
-    async (parentId: string, position: "top" | "bottom" | "left" | "right", nodeType?: "manual" | "audio_generated" | "ai_suggested", nodeSource?: "user_input" | "audio_transcription" | "ai_synthesis") => {
+    async (parentId: string, position: "top" | "bottom" | "left" | "right") => {
       try {
         const newNodeId = uuidv4();
         const parentNode = nodes.find((node) => node.id === parentId);
@@ -119,8 +119,8 @@ export const NodeOperationsProvider = ({
               parents: newNode.data.parents,
               children: newNode.data.children,
               depth: newNode.data.depth,
-              node_type: nodeType,
-              source: nodeSource,
+              node_type: "manual",
+              source: "user_input",
             }]
           }),
         });

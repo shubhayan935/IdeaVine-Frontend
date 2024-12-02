@@ -50,7 +50,14 @@ import {
   FileText, 
   Video, 
   Music, 
-  Image
+  Image,
+  File,
+  HelpCircle,
+  Mail,
+  Lock,
+  ChevronDown,
+  Link2,
+  Globe,
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -59,6 +66,7 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AppSidebar, SidebarUpdateContext } from "./Sidebar";
 import { v4 as uuidv4 } from "uuid";
 import { useMediaQuery } from "react-responsive";
@@ -92,7 +100,63 @@ interface CustomNodeData {
   depth: number;
   isHighlighted?: boolean;
   position?: XYPosition | undefined;
+  node_type?: string;
+  source?: string;
 }
+
+const SourceIndicator: React.FC<{ type: string; source: string }> = ({ type, source }) => {
+  let Icon = Lightbulb;
+  let bgColor = 'bg-gray-200';
+  let tooltipContent = 'Node source unknown';
+
+  switch (source) {
+    case 'audio_transcription':
+      Icon = Mic;
+      bgColor = 'bg-blue-200';
+      tooltipContent = 'Node created from a voice recording';
+      break;
+    case 'pdf_extraction':
+      Icon = FileText;
+      bgColor = 'bg-red-200';
+      tooltipContent = 'Node created from uploaded PDF';
+      break;
+    case 'video_analysis':
+      Icon = Video;
+      bgColor = 'bg-purple-200';
+      tooltipContent = 'Node created from uploaded video';
+      break;
+    case 'image_analysis':
+      Icon = Image;
+      bgColor = 'bg-green-200';
+      tooltipContent = 'Node created from uploaded image';
+      break;
+    case 'ai_synthesis':
+      Icon = Lightbulb;
+      bgColor = 'bg-yellow-200';
+      tooltipContent = 'Node suggested by IdeaVine';
+      break;
+    case 'user_input':
+      Icon = PenTool;
+      bgColor = 'bg-indigo-200';
+      tooltipContent = 'Node created manually';
+      break;
+  }
+
+  return (
+    <TooltipProvider delayDuration={50}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className={`absolute top-0 right-0 p-1 rounded-tr-md rounded-bl-md ${bgColor} cursor-pointer`}>
+            <Icon className="h-5 w-5 text-gray-700" />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent side="top" align="end">
+          <p>{tooltipContent}</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+};
 
 // Define the props for your custom node component
 interface CustomNodeProps extends NodeProps {
@@ -145,6 +209,8 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
             children: node.data.children,
             depth: node.data.depth,
             position: node.position,
+            node_type: node.data.type,
+            source: node.data.source,
           });
           return { ...node, data: { ...nodeData }, draggable: true };
         }
@@ -186,6 +252,8 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
     };
   }, [isEditing, handleBlur]);
 
+  console.log(data);
+
   return (
     <div className="relative" ref={nodeRef}>
       {/* Handles for connections */}
@@ -201,6 +269,7 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
           data.isHighlighted ? "bg-yellow-100" : ""
         } transition-[background-color] duration-1000`}
       >
+        <SourceIndicator type={data.node_type || ''} source={data.source || ''} />
         {isEditing ? (
           // Editing Mode
           <div className="flex flex-col gap-2">
@@ -287,6 +356,14 @@ const nodeTypes = {
   customNode: CustomNode,
 };
 
+interface SharedUsers {
+  id: string
+  name: string
+  email: string
+  role: 'Owner' | 'Editor' | 'Viewer'
+  isCurrentUser?: boolean
+}
+
 // Main MindMapContent Component
 function MindMapContent() {
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNodeData>([]);
@@ -323,16 +400,31 @@ function MindMapContent() {
   const isMobile = useMediaQuery({ maxWidth: 768 });
   const isTablet = useMediaQuery({ minWidth: 769, maxWidth: 1024 });
 
-  const [sharePermission, setSharePermission] = useState('edit')
-  const [shareLink, setShareLink] = useState('')
+  const [isOpen, setIsOpen] = useState(false)
+  const [accessLevel, setAccessLevel] = useState<'Restricted' | 'Anyone with the link'>('Restricted')
+  const [sharedUsers, setSharedUsers] = useState<SharedUsers[]>([
+    {
+      id: '1',
+      name: 'Shubhayan Srivastava',
+      email: 'shubhaya@usc.edu',
+      role: 'Owner',
+      isCurrentUser: true
+    },
+    {
+      id: '2',
+      name: 'Vishnu Kadaba',
+      email: 'vkadaba@usc.edu',
+      role: 'Editor'
+    }
+  ])
 
   // const { theme, setTheme } = useTheme();
   const { signOut } = useClerk()
 
-  const [uploadType, setUploadType] = useState<"PDF" | "Video" | "Audio" | "Image" | null>(null)
+  const [uploadType, setUploadType] = useState<"PDF" | "Video" | "Audio" | "Image" | "Document" | null>(null)
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
 
-  const handleUpload = (type: "PDF" | "Video" | "Audio" | "Image") => {
+  const handleUpload = (type: "PDF" | "Video" | "Audio" | "Image" | "Document") => {
     setUploadType(type)
     setIsUploadDialogOpen(true)
   }
@@ -345,6 +437,7 @@ function MindMapContent() {
         Video: 100 * 1024 * 1024, // 100MB
         Audio: 50 * 1024 * 1024, // 50MB
         Image: 20 * 1024 * 1024, // 20MB
+        Document: 100 * 1024 * 1024 // 100MB
       }[uploadType!]
 
       if (file.size > fileSizeLimit) {
@@ -412,6 +505,8 @@ function MindMapContent() {
                 parents: node.parents,
                 children: node.children,
                 depth: node.depth,
+                node_type: node.metadata.type,
+                source: node.metadata.source,
               },
               position: {
                 x: Number(node.position.x),
@@ -1201,14 +1296,14 @@ function MindMapContent() {
     }
   }, [layoutOnNextRender, onLayout]);
 
-  const handleShareLinkCopy = () => {
-    navigator.clipboard.writeText(shareLink)
-    console.log(`link copied: ${shareLink}`)
-    // toast({
-    //   title: "Link copied",
-    //   description: "The share link has been copied to your clipboard.",
-    // })
-  }
+  // const handleShareLinkCopy = () => {
+  //   navigator.clipboard.writeText(shareLink)
+  //   console.log(`link copied: ${shareLink}`)
+  //   // toast({
+  //   //   title: "Link copied",
+  //   //   description: "The share link has been copied to your clipboard.",
+  //   // })
+  // }
 
   const getUserInitials = () => {
     if (!userEmail) return "U"
@@ -1219,6 +1314,26 @@ function MindMapContent() {
   const handleLogout = async () => {
     await signOut()
     navigate('/')
+  }
+
+  const handleClose = () => {
+    setIsOpen(false)
+  }
+
+  const handleRoleChange = (userId: string, newRole: 'Editor' | 'Viewer' | null) => {
+    setSharedUsers(currentUsers => 
+      currentUsers.filter(user => {
+        if (user.id === userId) {
+          return newRole !== null // Remove user if newRole is null
+        }
+        return true
+      }).map(user => {
+        if (user.id === userId && newRole) {
+          return { ...user, role: newRole }
+        }
+        return user
+      })
+    )
   }
 
   return (
@@ -1232,7 +1347,7 @@ function MindMapContent() {
         {/* <AppSidebar /> */}
         <div className="w-full h-screen flex flex-col">
           {/* Top Bar */}
-          <div className="relative flex items-center justify-between p-4 bg-background border-b">
+          <div className="relative flex items-center justify-between p-4 bg-background border-b select-none">
             <a href="/mindmap">
               <div className="flex items-center gap-2">
                   <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary shadow-sm">
@@ -1244,7 +1359,7 @@ function MindMapContent() {
             {/* <SidebarTrigger className="w-10 h-10" variant={"outline"} /> */}
             <div className="absolute left-1/2 transform -translate-x-1/2 max-w-[50%] md:max-w-[60%] lg:max-w-[70%]">
               <Input
-                className="text-center text-lg font-bold bg-transparent border-none outline-none p-0 m-0"
+                className="text-center text-lg font-bold bg-transparent border-none outline-none p-0 m-0 select-text"
                 style={{
                   width: "auto",
                   minWidth: "50px",
@@ -1266,53 +1381,129 @@ function MindMapContent() {
               </Button>
             ) : (
               <div className="flex items-center space-x-4">
-                <Dialog>
+                {/* <Dialog open={isOpen} onOpenChange={setIsOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="bg-primary text-background">
-                      <Share2 className="mr-2 h-4 w-4" />
+                    <Button variant="outline">
+                      <Share2 className="h-4 w-4 mr-2" />
                       Share
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Share mindmap</DialogTitle>
-                      <DialogDescription>
-                        Anyone with the link can view this mindmap.
-                      </DialogDescription>
+                  <DialogContent className="sm:max-w-md [&>button]:hidden">
+                    <DialogHeader className="flex items-center justify-between">
+                      <DialogTitle className="text-xl font-normal">
+                        Share "{mapTitle}"
+                      </DialogTitle>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-8 w-8 rounded-sm absolute right-4 top-4"
+                        onClick={handleClose}
+                      >
+                        <X className="h-4 w-4" />
+                        <span className="sr-only">Close</span>
+                      </Button>
                     </DialogHeader>
-                    <div className="flex items-center space-x-2">
-                      <div className="grid flex-1 gap-2">
-                        <Label htmlFor="link" className="sr-only">
-                          Link
-                        </Label>
-                        <Input
-                          id="link"
-                          defaultValue={shareLink}
-                          readOnly
-                        />
+
+                    <div className="mt-4">
+                      <Input 
+                        className="w-full border-2 border-primary py-6"
+                        placeholder="Add people by email"
+                      />
+                    </div>
+
+                    <div className="mt-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg">People with access</h3>
                       </div>
-                      <Button type="submit" size="sm" className="px-3" onClick={handleShareLinkCopy}>
-                        <span className="sr-only">Copy</span>
+
+                      <div className="space-y-4">
+                        {sharedUsers.map(user => (
+                          <div key={user.id} className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Avatar>
+                                <AvatarImage src="/placeholder.svg" />
+                                <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-medium">{user.name} {user.isCurrentUser && '(you)'}</div>
+                                <div className="text-sm text-muted-foreground">{user.email}</div>
+                              </div>
+                            </div>
+                            {user.role === 'Owner' ? (
+                              <div className="text-sm text-muted-foreground">Owner</div>
+                            ) : (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                <Button variant="default" className="bg-transparent text-foreground hover:bg-foreground/10">
+                                    {user.role}
+                                    <ChevronDown className="ml-2 h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onSelect={() => handleRoleChange(user.id, 'Viewer')}>
+                                    Viewer
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onSelect={() => handleRoleChange(user.id, 'Editor')}>
+                                    Editor
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onSelect={() => handleRoleChange(user.id, null)}>
+                                    Remove access
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="mt-6">
+                      <h3 className="text-lg mb-4">General access</h3>
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
+                          {accessLevel === 'Restricted' ? (
+                            <Lock className="h-5 w-5" />
+                          ) : (
+                            <Globe className="h-5 w-5" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" className="w-full justify-between hover:bg-transparent mb-1">
+                                <span>{accessLevel}</span>
+                                <ChevronDown className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onSelect={() => setAccessLevel('Restricted')}>
+                                Restricted
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => setAccessLevel('Anyone with the link')}>
+                                Anyone with the link
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          <p className="text-sm text-muted-foreground">
+                            {accessLevel === 'Restricted' 
+                              ? 'Only people with access can open with the link'
+                              : 'Anyone on the internet with the link can view'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 flex justify-between">
+                      <Button variant="outline" className="gap-2">
+                        <Link2 className="h-4 w-4" />
                         Copy link
+                      </Button>
+                      <Button onClick={handleClose}>
+                        Done
                       </Button>
                     </div>
-                    <RadioGroup defaultValue={sharePermission} onValueChange={setSharePermission}>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="view" id="r1" />
-                        <Label htmlFor="r1">Can view</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="edit" id="r2" />
-                        <Label htmlFor="r2">Can edit</Label>
-                      </div>
-                    </RadioGroup>
-                    <DialogFooter className="sm:justify-start">
-                      <Button type="button" variant="secondary" onClick={handleShareLinkCopy}>
-                        Copy link
-                      </Button>
-                    </DialogFooter>
                   </DialogContent>
-                </Dialog>
+                </Dialog> */}
                 {/* <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
                   {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </Button> */}
@@ -1376,7 +1567,7 @@ function MindMapContent() {
                 <Background />
                 <MiniMap position="bottom-right" />
                 <Panel position="top-left">
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 select-none">
                     <Button
                       onClick={handleRecording}
                       disabled={isRecordingLoading}
@@ -1398,7 +1589,7 @@ function MindMapContent() {
                         </>
                       )}
                     </Button>
-                    <DropdownMenu>
+                    {/* <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button>
                           <Upload className="mr-2 h-4 w-4" />
@@ -1422,8 +1613,12 @@ function MindMapContent() {
                         <Image className="mr-2 h-4 w-4" />
                         Image
                       </DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => handleUpload("Document")}>
+                        <File className="mr-2 h-4 w-4" />
+                        Document
+                      </DropdownMenuItem>
                       </DropdownMenuContent>
-                    </DropdownMenu>
+                    </DropdownMenu> */}
                     <Button
                       onClick={handleSuggest}
                       disabled={selectedNodes.length === 0 || isSuggestLoading}
@@ -1459,7 +1654,7 @@ function MindMapContent() {
                   </div>
                 </Panel>
                 <Panel position="top-right">
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 select-none">
                     <div className="relative">
                       <Input
                         type="text"
@@ -1493,7 +1688,7 @@ function MindMapContent() {
             <div
               className={`fixed top-0 right-0 h-full w-96 bg-white shadow-lg transform transition-transform duration-300 ${
                 isSidebarOpen ? "translate-x-0" : "translate-x-full"
-              }`}
+              } select-none`}
             >
               <div className="p-4">
                 <div className="flex justify-between items-center mb-4">
@@ -1532,7 +1727,7 @@ function MindMapContent() {
               </div>
             </div>
           </div>
-          <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+          {/* <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Upload {uploadType}</DialogTitle>
@@ -1548,13 +1743,12 @@ function MindMapContent() {
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <FileUp className="w-8 h-8 mb-4 text-gray-500 dark:text-gray-400" />
                     <p className="mb-2 text-sm text-gray-500 dark:text-gray-400"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                    {/* <p className="text-xs text-gray-500 dark:text-gray-400">SVG, PNG, JPG or GIF (MAX. 800x400px)</p> */}
                   </div>
                   <input id="dropzone-file" type="file" className="hidden" onChange={(e) => handleFileUpload(e.target.files)} />
                 </label>
               </div>
             </DialogContent>
-          </Dialog>
+          </Dialog> */}
         </div>
       </SidebarProvider>
     </NodeOperationsProvider>
