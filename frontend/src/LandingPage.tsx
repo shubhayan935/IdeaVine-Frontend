@@ -23,7 +23,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card } from "@/components/ui/card"
 import { useNavigate } from 'react-router-dom'
-import { useUserInfo } from './context/UserContext'
 import { cn } from "@/lib/utils"
 
 const initialNodes: Node[] = [
@@ -146,74 +145,67 @@ function LandingPageContent() {
 
   const [nodes] = useState(initialNodes)
   const [edges] = useState(initialEdges)
+  // const [isLoading, setIsLoading] = useState(false)
+  // const { userEmail } = useUserInfo();
 
-  const [mindmaps, setMindmaps] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(false)
-  const { userEmail } = useUserInfo();
-
-  useEffect(() => {
-    if (userEmail) {
-      preFetchMindmaps();
-    }
-  }, [userEmail]);
+  // useEffect(() => {
+  //   if (userEmail) {
+  //     preFetchMindmaps();
+  //   }
+  // }, [userEmail]);
 
   const [starCount, setStarCount] = useState(25)
 
-  const preFetchMindmaps = async () => {
-    if (!userEmail) return;
+  // const preFetchMindmaps = async () => {
+  //   if (!userEmail) return;
 
-    try {
-      setIsLoading(true);
-      const response = await fetch(`https://ideavine.onrender.com/users/lookup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email: userEmail }),
-      });
+  //   try {
+  //     setIsLoading(true);
+  //     const response = await fetch(`https://ideavine.onrender.com/users/lookup`, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({ email: userEmail }),
+  //     });
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch user UID");
-      }
+  //     if (!response.ok) {
+  //       throw new Error("Failed to fetch user UID");
+  //     }
 
-      const data = await response.json();
-      const userUid = data.user._id;
+  //     const data = await response.json();
+  //     const userUid = data.user._id;
 
-      const mindmapsResponse = await fetch(
-        `https://ideavine.onrender.com/users/${userUid}/mindmaps`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+  //     const mindmapsResponse = await fetch(
+  //       `https://ideavine.onrender.com/users/${userUid}/mindmaps`,
+  //       {
+  //         method: "GET",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //       }
+  //     );
 
-      if (!mindmapsResponse.ok) {
-        throw new Error("Failed to fetch mindmaps");
-      }
+  //     if (!mindmapsResponse.ok) {
+  //       throw new Error("Failed to fetch mindmaps");
+  //     }
 
-      const mindmapsData = await mindmapsResponse.json();
-      const sortedMindmaps = mindmapsData.mindmaps.sort(
-        (a: { updated_at: string | number | Date }, b: { updated_at: string | number | Date }) => 
-          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-      );
+  //     const mindmapsData = await mindmapsResponse.json();
+  //     const sortedMindmaps = mindmapsData.mindmaps.sort(
+  //       (a: { updated_at: string | number | Date }, b: { updated_at: string | number | Date }) => 
+  //         new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+  //     );
 
-      setMindmaps(sortedMindmaps);
-    } catch (err: any) {
-      console.error("Error pre-fetching mindmaps:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     setMindmaps(sortedMindmaps);
+  //   } catch (err: any) {
+  //     console.error("Error pre-fetching mindmaps:", err);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const openMindmaps = () => {
-    if (mindmaps.length > 0) {
-      navigate(`/mindmap/${mindmaps[0]._id}`);
-    } else {
-      // If no mindmaps are available, you might want to create a new one or show a message
-      console.log("No mindmaps available");
-    }
+    navigate(`/mindmap`);
   };
 
 
@@ -340,9 +332,8 @@ function LandingPageContent() {
                   size="sm" 
                   className="rounded-full" 
                   onClick={openMindmaps}
-                  disabled={isLoading}
                 >
-                  {isLoading ? 'Loading...' : 'Open Mind Maps'}
+                  Open Mind Maps
                 </Button>
                 <UserButton />
               </SignedIn>
@@ -372,9 +363,8 @@ function LandingPageContent() {
                     size="lg" 
                     className={cn("rounded-full", "select-none")}
                     onClick={openMindmaps}
-                    disabled={isLoading}
                   >
-                    {isLoading ? 'Loading...' : 'Get Started'}
+                    Get Started
                     <ChevronRight className="ml-2 h-4 w-4" />
                   </Button>
                 </SignedIn>

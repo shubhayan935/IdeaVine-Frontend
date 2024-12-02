@@ -1,8 +1,11 @@
+// App.tsx
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import LandingPage from "./LandingPage";
 import AuthPage from "./AuthPage";
 import MindMap from "./MindMap";
 import { useUserInfo } from "./context/UserContext";
+import MindMapHome from "./MindMapHome";
 import { SidebarUpdateProvider } from "./context/SidebarUpdateContext"; // Import SidebarUpdateProvider
 
 
@@ -32,9 +35,7 @@ export default function App() {
             <Route
               path="/mindmap"
               element={
-                <RequireAuthForMindMap>
-                  <MindMap />
-                </RequireAuthForMindMap>
+                  <MindMapHome />
               }
             />
             {/* Redirect any unknown routes to home */}

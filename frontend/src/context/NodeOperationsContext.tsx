@@ -15,12 +15,14 @@ interface CustomNodeData {
   depth: number;
   isHighlighted?: boolean;
   position?: XYPosition | undefined;
+  node_type?: string;
+  source?: string;
 }
 
 interface NodeOperationsContextProps {
   addNodeToDB: (
     parentId: string,
-    position: "top" | "bottom" | "left" | "right"
+    position: "top" | "bottom" | "left" | "right",
   ) => Promise<void>;
   updateNodeInDB: (node: Partial<CustomNodeData>) => Promise<void>;
   deleteNodeFromDB: (nodeId: string) => Promise<void>;
@@ -117,6 +119,8 @@ export const NodeOperationsProvider = ({
               parents: newNode.data.parents,
               children: newNode.data.children,
               depth: newNode.data.depth,
+              node_type: "manual",
+              source: "user_input",
             }]
           }),
         });
