@@ -1,5 +1,8 @@
 {
-  "rewrites" : [
-    {"source" : "/mindmap", "destination" : "/mindmap"}
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }
