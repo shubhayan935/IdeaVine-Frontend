@@ -36,14 +36,10 @@ import {
   Lightbulb,
   PenTool,
   X,
-  Search,
   Menu,
   Leaf,
-  // Share2,
-  // Sun,
-  // Moon,
   LogOut,
-  Settings,
+  // Settings,
   // Upload,
   // FileUp,
   FileText, 
@@ -51,12 +47,6 @@ import {
   // Music, 
   Image,
   // File,
-  // HelpCircle,
-  // Mail,
-  // Lock,
-  // ChevronDown,
-  // Link2,
-  // Globe,
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -66,10 +56,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+// import { Dialog, DialogHeader, DialogContent, DialogTitle, DialogDescription, } from "@/components/ui/dialog";
 import { SidebarUpdateContext } from "./Sidebar";
 import { v4 as uuidv4 } from "uuid";
 import { useMediaQuery } from "react-responsive";
 import { useUserInfo } from "./context/UserContext";
+// import { ShareDialog } from "./ShareDialog"
 import { useParams, useNavigate } from "react-router-dom";
 import { deriveEdgesFromNodes } from "./utils/deriveEdges";
 import {
@@ -214,6 +206,7 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
   // Handle adding a new node in a specific direction
   const handleAddNode = useCallback(
     (position: "top" | "bottom" | "left" | "right") => {
+      console.log("here daddy");
       addNodeToDB(id, position);
     },
     [id, addNodeToDB]
@@ -239,8 +232,6 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isEditing, handleBlur]);
-
-  console.log(data);
 
   return (
     <div className="relative" ref={nodeRef}>
@@ -344,14 +335,6 @@ const nodeTypes = {
   customNode: CustomNode,
 };
 
-// interface SharedUsers {
-//   id: string
-//   name: string
-//   email: string
-//   role: 'Owner' | 'Editor' | 'Viewer'
-//   isCurrentUser?: boolean
-// }
-
 // Main MindMapContent Component
 function MindMapContent() {
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNodeData>([]);
@@ -362,8 +345,7 @@ function MindMapContent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [mapTitle, setMapTitle] = useState<string>("Untitled Mind Map");
   const { updateSidebarTitle } = useContext(SidebarUpdateContext);
-  const [previousTitle, setPreviousTitle] =
-    useState<string>("Untitled Mind Map");
+  const [previousTitle, setPreviousTitle] = useState<string>("Untitled Mind Map");
   const [layoutOnNextRender, setLayoutOnNextRender] = useState(false);
 
   const [isRecording, setIsRecording] = useState(false);
@@ -379,6 +361,8 @@ function MindMapContent() {
   const [isCreating] = useState(false);
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState<string[]>([]);
+  const [currentMatch, setCurrentMatch] = useState(0);
 
   const { userEmail, firstName, lastName } = useUserInfo(); // Access userEmail from context
   const { mindmap_id } = useParams<{ mindmap_id: string }>(); // Extract mindmap_id from URL
@@ -388,58 +372,42 @@ function MindMapContent() {
   const isMobile = useMediaQuery({ maxWidth: 768 });
   // const isTablet = useMediaQuery({ minWidth: 769, maxWidth: 1024 });
 
-  // const [isOpen, setIsOpen] = useState(false)
-  // const [accessLevel, setAccessLevel] = useState<'Restricted' | 'Anyone with the link'>('Restricted')
-  // const [sharedUsers, setSharedUsers] = useState<SharedUsers[]>([
-  //   {
-  //     id: '1',
-  //     name: 'Shubhayan Srivastava',
-  //     email: 'shubhaya@usc.edu',
-  //     role: 'Owner',
-  //     isCurrentUser: true
-  //   },
-  //   {
-  //     id: '2',
-  //     name: 'Vishnu Kadaba',
-  //     email: 'vkadaba@usc.edu',
-  //     role: 'Editor'
-  //   }
-  // ])
+  // const [isPublic, setIsPublic] = useState(false)
 
   // const { theme, setTheme } = useTheme();
   const { signOut } = useClerk()
 
   // const [uploadType, setUploadType] = useState<"PDF" | "Video" | "Audio" | "Image" | "Document" | null>(null)
-  // // const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
+  // const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
 
-  // // const handleUpload = (type: "PDF" | "Video" | "Audio" | "Image" | "Document") => {
-  // //   setUploadType(type)
-  // //   setIsUploadDialogOpen(true)
-  // // }
+  // const handleUpload = (type: "PDF" | "Video" | "Audio" | "Image" | "Document") => {
+  //   setUploadType(type)
+  //   setIsUploadDialogOpen(true)
+  // }
 
-  // // const handleFileUpload = (files: FileList | null) => {
-  // //   if (files && files.length > 0) {
-  // //     const file = files[0]
-  // //     const fileSizeLimit = {
-  // //       PDF: 100 * 1024 * 1024, // 100MB
-  // //       Video: 100 * 1024 * 1024, // 100MB
-  // //       Audio: 50 * 1024 * 1024, // 50MB
-  // //       Image: 20 * 1024 * 1024, // 20MB
-  // //       Document: 100 * 1024 * 1024 // 100MB
-  // //     }[uploadType!]
+  // const handleFileUpload = (files: FileList | null) => {
+  //   if (files && files.length > 0) {
+  //     const file = files[0]
+  //     const fileSizeLimit = {
+  //       PDF: 100 * 1024 * 1024, // 100MB
+  //       Video: 100 * 1024 * 1024, // 100MB
+  //       Audio: 50 * 1024 * 1024, // 50MB
+  //       Image: 20 * 1024 * 1024, // 20MB
+  //       Document: 100 * 1024 * 1024 // 100MB
+  //     }[uploadType!]
 
-  // //     if (file.size > fileSizeLimit) {
-  // //       alert(`File size exceeds the limit of ${fileSizeLimit / (1024 * 1024)}MB`)
-  // //       return
-  // //     }
+  //     if (file.size > fileSizeLimit) {
+  //       alert(`File size exceeds the limit of ${fileSizeLimit / (1024 * 1024)}MB`)
+  //       return
+  //     }
 
-  // //     // Here you would handle the file upload to your backend
-  // //     console.log(`Uploading ${uploadType} file:`, file.name)
+  //     // Here you would handle the file upload to your backend
+  //     console.log(`Uploading ${uploadType} file:`, file.name)
       
-  // //     // Close the dialog after upload
-  // //     setIsUploadDialogOpen(false)
-  // //   }
-  // // }
+  //     // Close the dialog after upload
+  //     setIsUploadDialogOpen(false)
+  //   }
+  // }
 
   // Utility functions to manage node operations
   // const addNodeToAddList = (node: any) => {
@@ -482,7 +450,6 @@ function MindMapContent() {
           }
 
           const data = await response.json();
-          console.log(data);
           const fetchedNodes: Node<CustomNodeData>[] = data.nodes.map(
             (node: any) => ({
               id: node._id,
@@ -735,7 +702,7 @@ function MindMapContent() {
     setNodes((nds) => [...nds, newNode]);
 
     let nodesToAdd = {
-      nodes_to_add: [
+      "nodes_to_add": [
         {
           _id: newNodeId,
           mindmap_id: mindmap_id,
@@ -746,6 +713,8 @@ function MindMapContent() {
           parents: newNode.data.parents,
           children: newNode.data.children,
           depth: newNode.data.depth,
+          node_type: "manual",
+          source: "user_input",
         },
       ],
     };
@@ -771,35 +740,52 @@ function MindMapContent() {
   // Auto layout the mind map using Dagre
   const onLayout = useCallback(async () => {
     if (!reactFlowInstance.current) return;
-
+  
     const nodeElements = reactFlowInstance.current.getNodes();
     const edgeElements = reactFlowInstance.current.getEdges();
-
+  
+    // Initialize dagre graph
     const dagreGraph = new dagre.graphlib.Graph();
     dagreGraph.setDefaultEdgeLabel(() => ({}));
-    dagreGraph.setGraph({ rankdir: "TB" });
-
-    // Add nodes to the dagre graph and get their actual dimensions
+    
+    // Configure layout direction and spacing
+    dagreGraph.setGraph({ 
+      rankdir: 'TB',  // Top to bottom layout
+      nodesep: 100,   // Horizontal spacing between nodes
+      ranksep: 150,   // Vertical spacing between ranks
+      edgesep: 80,    // Minimum edge spacing
+      marginx: 50,    // Horizontal margin
+      marginy: 50     // Vertical margin
+    });
+  
+    // Add nodes with dimensions
     nodeElements.forEach((node) => {
       const nodeElement = document.querySelector(`[data-id="${node.id}"]`);
+      let width = 200;  // Default width
+      let height = 100; // Default height
+      
       if (nodeElement) {
-        const { width, height } = nodeElement.getBoundingClientRect();
-        dagreGraph.setNode(node.id, { width, height });
-      } else {
-        // Fallback to default dimensions if the node element is not found
-        dagreGraph.setNode(node.id, { width: 172, height: 36 });
+        const rect = nodeElement.getBoundingClientRect();
+        width = Math.max(rect.width, 200);  // Minimum width
+        height = Math.max(rect.height, 100); // Minimum height
       }
+      
+      // Add padding to dimensions
+      width += 50;
+      height += 50;
+      
+      dagreGraph.setNode(node.id, { width, height });
     });
-
-    // Add edges to the dagre graph
+  
+    // Add edges
     edgeElements.forEach((edge) => {
       dagreGraph.setEdge(edge.source, edge.target);
     });
-
-    // Use dagre to calculate the layout
+  
+    // Calculate layout
     dagre.layout(dagreGraph);
-
-    // Update node positions based on the dagre layout
+  
+    // Apply positions to nodes with animation
     const newNodes = nodeElements.map((node) => {
       const nodeWithPosition = dagreGraph.node(node.id);
       return {
@@ -808,16 +794,23 @@ function MindMapContent() {
           x: nodeWithPosition.x - nodeWithPosition.width / 2,
           y: nodeWithPosition.y - nodeWithPosition.height / 2,
         },
+        style: {
+          ...node.style,
+        },
       };
     });
-
+  
     setNodes(newNodes);
-
-    // Center the view on the new layout
+  
+    // Center view with animation
     window.requestAnimationFrame(() => {
-      fitView({ padding: 0.2, maxZoom: 0.8 });
+      fitView({ 
+        padding: 0.2, 
+        maxZoom: 0.8,
+        duration: 800,
+      });
     });
-
+  
     // Update node positions in the backend
     for (const node of newNodes) {
       await updateNodeInDB(node);
@@ -996,50 +989,68 @@ function MindMapContent() {
     }
   }, [nodes]);
 
-  // Handle searching for nodes
   const handleSearch = useCallback(() => {
-    if (!searchTerm) return;
-
-    const matchingNodes = nodes.filter(
-      (node) =>
+    const matches = nodes.filter(
+      node =>
         node.data.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         node.data.content.toLowerCase().includes(searchTerm.toLowerCase())
     );
-
-    if (matchingNodes.length > 0) {
-      const firstMatch = matchingNodes[0];
-      setCenter(firstMatch.position.x, firstMatch.position.y, {
-        zoom: 1.5,
-        duration: 1000,
+  
+    setSearchResults(matches.map(node => node.id));
+    setCurrentMatch(matches.length > 0 ? 0 : -1);
+  
+    if (matches.length > 0) {
+      const firstMatch = matches[0];
+      highlightAndCenter(firstMatch.id);
+    }
+  }, [searchTerm, nodes]);
+  
+  const highlightAndCenter = useCallback((nodeId: string) => {
+    const matchNode = nodes.find(node => node.id === nodeId);
+    if (matchNode) {
+      setCenter(matchNode.position.x, matchNode.position.y, { 
+        zoom: 1.5, 
+        duration: 1000 
       });
-
-      // Highlight matching nodes
-      setNodes((nds) =>
-        nds.map((node) => ({
+  
+      setNodes(nds => 
+        nds.map(node => ({
           ...node,
           data: {
             ...node.data,
-            isHighlighted: matchingNodes.some((n) => n.id === node.id),
-          },
+            isHighlighted: node.id === nodeId
+          }
         }))
       );
-
-      // Remove highlight after 3 seconds with fade-away effect
+  
       setTimeout(() => {
-        setNodes((nds) =>
-          nds.map((node) => ({
+        setNodes(nds =>
+          nds.map(node => ({
             ...node,
             data: {
               ...node.data,
-              isHighlighted: false,
-            },
+              isHighlighted: false
+            }
           }))
         );
       }, 3000);
-    } else {
-      return;
     }
-  }, [searchTerm, nodes, setCenter, setNodes]);
+  }, [nodes, setCenter, setNodes]);
+  
+  const navigateSearch = useCallback((direction: 'next' | 'prev') => {
+    if (searchResults.length === 0) return;
+  
+    let nextMatch;
+    if (direction === 'next') {
+      nextMatch = (currentMatch + 1) % searchResults.length;
+    } else {
+      nextMatch = currentMatch - 1;
+      if (nextMatch < 0) nextMatch = searchResults.length - 1;
+    }
+  
+    setCurrentMatch(nextMatch);
+    highlightAndCenter(searchResults[nextMatch]);
+  }, [currentMatch, searchResults, highlightAndCenter]);
 
   // Initialize ReactFlow instance
   const onInit = useCallback((instance: ReactFlowInstance) => {
@@ -1246,31 +1257,6 @@ function MindMapContent() {
         }
       });
 
-      // Send new edges to backend
-      // derivedEdges.forEach(async (edge) => {
-      //   try {
-      //     const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap_id}/edges`, {
-      //       method: 'POST',
-      //       headers: {
-      //         'Content-Type': 'application/json',
-      //       },
-      //       body: JSON.stringify({
-      //         _id: edge.id,
-      //         mindmap_id: mindmap_id,
-      //         source: edge.source,
-      //         target: edge.target,
-      //         type: edge.type,
-      //       }),
-      //     });
-
-      //     if (!response.ok) {
-      //       throw new Error('Failed to add edge to the database.');
-      //     }
-      //   } catch (error: any) {
-      //     console.error("Error adding edge:", error);
-      //   }
-      // });
-
       return { newNodes, newEdges: derivedEdges };
     },
     [nodes, mindmap_id, userEmail]
@@ -1284,13 +1270,11 @@ function MindMapContent() {
     }
   }, [layoutOnNextRender, onLayout]);
 
-  // const handleShareLinkCopy = () => {
-  //   navigator.clipboard.writeText(shareLink)
-  //   console.log(`link copied: ${shareLink}`)
-  //   // toast({
-  //   //   title: "Link copied",
-  //   //   description: "The share link has been copied to your clipboard.",
-  //   // })
+
+  // const handleVisibilityChange = (newIsPublic: boolean) => {
+  //   setIsPublic(newIsPublic)
+  //   // Here you would typically update the backend with the new visibility status
+  //   console.log("Updating map visibility:", newIsPublic)
   // }
 
   const getUserInitials = () => {
@@ -1303,26 +1287,6 @@ function MindMapContent() {
     await signOut()
     navigate('/')
   }
-
-  // const handleClose = () => {
-  //   setIsOpen(false)
-  // }
-
-  // const handleRoleChange = (userId: string, newRole: 'Editor' | 'Viewer' | null) => {
-  //   setSharedUsers(currentUsers => 
-  //     currentUsers.filter(user => {
-  //       if (user.id === userId) {
-  //         return newRole !== null // Remove user if newRole is null
-  //       }
-  //       return true
-  //     }).map(user => {
-  //       if (user.id === userId && newRole) {
-  //         return { ...user, role: newRole }
-  //       }
-  //       return user
-  //     })
-  //   )
-  // }
 
   return (
     <NodeOperationsProvider
@@ -1344,7 +1308,6 @@ function MindMapContent() {
                   <span className="font-semibold text-xl tracking-tight">IdeaVine</span>
               </div>
             </a>
-            {/* <SidebarTrigger className="w-10 h-10" variant={"outline"} /> */}
             <div className="absolute left-1/2 transform -translate-x-1/2 max-w-[50%] md:max-w-[60%] lg:max-w-[70%]">
               <Input
                 className="text-center text-lg font-bold bg-transparent border-none outline-none p-0 m-0 select-text"
@@ -1369,129 +1332,12 @@ function MindMapContent() {
               </Button>
             ) : (
               <div className="flex items-center space-x-4">
-                {/* <Dialog open={isOpen} onOpenChange={setIsOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline">
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Share
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md [&>button]:hidden">
-                    <DialogHeader className="flex items-center justify-between">
-                      <DialogTitle className="text-xl font-normal">
-                        Share "{mapTitle}"
-                      </DialogTitle>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="h-8 w-8 rounded-sm absolute right-4 top-4"
-                        onClick={handleClose}
-                      >
-                        <X className="h-4 w-4" />
-                        <span className="sr-only">Close</span>
-                      </Button>
-                    </DialogHeader>
-
-                    <div className="mt-4">
-                      <Input 
-                        className="w-full border-2 border-primary py-6"
-                        placeholder="Add people by email"
-                      />
-                    </div>
-
-                    <div className="mt-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg">People with access</h3>
-                      </div>
-
-                      <div className="space-y-4">
-                        {sharedUsers.map(user => (
-                          <div key={user.id} className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <Avatar>
-                                <AvatarImage src="/placeholder.svg" />
-                                <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <div className="font-medium">{user.name} {user.isCurrentUser && '(you)'}</div>
-                                <div className="text-sm text-muted-foreground">{user.email}</div>
-                              </div>
-                            </div>
-                            {user.role === 'Owner' ? (
-                              <div className="text-sm text-muted-foreground">Owner</div>
-                            ) : (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                <Button variant="default" className="bg-transparent text-foreground hover:bg-foreground/10">
-                                    {user.role}
-                                    <ChevronDown className="ml-2 h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onSelect={() => handleRoleChange(user.id, 'Viewer')}>
-                                    Viewer
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onSelect={() => handleRoleChange(user.id, 'Editor')}>
-                                    Editor
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem onSelect={() => handleRoleChange(user.id, null)}>
-                                    Remove access
-                                  </DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="mt-6">
-                      <h3 className="text-lg mb-4">General access</h3>
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
-                          {accessLevel === 'Restricted' ? (
-                            <Lock className="h-5 w-5" />
-                          ) : (
-                            <Globe className="h-5 w-5" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" className="w-full justify-between hover:bg-transparent mb-1">
-                                <span>{accessLevel}</span>
-                                <ChevronDown className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onSelect={() => setAccessLevel('Restricted')}>
-                                Restricted
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => setAccessLevel('Anyone with the link')}>
-                                Anyone with the link
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                          <p className="text-sm text-muted-foreground">
-                            {accessLevel === 'Restricted' 
-                              ? 'Only people with access can open with the link'
-                              : 'Anyone on the internet with the link can view'}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-6 flex justify-between">
-                      <Button variant="outline" className="gap-2">
-                        <Link2 className="h-4 w-4" />
-                        Copy link
-                      </Button>
-                      <Button onClick={handleClose}>
-                        Done
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog> */}
+                {/* <ShareDialog
+                  title={mapTitle}
+                  mindmapId={mindmap_id}
+                  isPublic={isPublic}
+                  onVisibilityChange={handleVisibilityChange}
+                /> */}
                 {/* <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
                   {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </Button> */}
@@ -1516,11 +1362,7 @@ function MindMapContent() {
                         maxWidth: "200px"
                       }}>{userEmail}</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Settings</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleLogout}>
+                    <DropdownMenuItem onClick={handleLogout} className="text-red-500">
                       <LogOut className="mr-2 h-4 w-4" />
                       <span>Log out</span>
                     </DropdownMenuItem>
@@ -1643,25 +1485,54 @@ function MindMapContent() {
                 </Panel>
                 <Panel position="top-right">
                   <div className="flex gap-2 select-none">
-                    <div className="relative">
-                      <Input
-                        type="text"
-                        placeholder="Search nodes..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            handleSearch()
-                          }
-                        }}
-                        className="pr-10"
-                      />
-                      <Button
-                        onClick={handleSearch}
-                        className="absolute inset-y-0 right-0 px-2 flex items-center"
-                      >
+                    <div className="relative flex gap-2">
+                      <div className="relative flex items-center">
+                        <Input
+                          type="text"
+                          placeholder="Search nodes..."
+                          value={searchTerm}
+                          onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            handleSearch();
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              const nextMatch = (currentMatch + 1) % searchResults.length;
+                              setCurrentMatch(nextMatch);
+                              highlightAndCenter(searchResults[nextMatch]);
+                            }
+                          }}
+                          className="pr-24"
+                        />
+                        {/* {searchResults.length > 0 && (
+                          <span className="absolute right-20 text-sm text-gray-500">
+                            {currentMatch + 1} of {searchResults.length}
+                          </span>
+                        )} */}
+                        <div className="absolute right-0 flex">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigateSearch('prev')}
+                            disabled={searchResults.length === 0 || searchTerm.length === 0}
+                            className="px-2 border-none bg-transparent"
+                          >
+                            ←
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigateSearch('next')}
+                            disabled={searchResults.length === 0 || searchTerm.length === 0}
+                            className="px-2 border-none bg-transparent"
+                          >
+                            →
+                          </Button>
+                        </div>
+                      </div>
+                      {/* <Button onClick={handleSearch} className="shrink-0">
                         <Search className="h-4 w-4" />
-                      </Button>
+                      </Button> */}
                     </div>
                     <Button onClick={onAddNodeManually}>
                       <Plus className="mr-0 h-4 w-4" />
