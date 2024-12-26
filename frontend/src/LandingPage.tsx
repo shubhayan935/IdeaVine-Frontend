@@ -2,7 +2,7 @@
 
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence, useAnimation } from 'framer-motion'
 import { Link as ScrollLink, Element } from 'react-scroll'
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,6 @@ import { Leaf, Brain, Zap, PenTool, Mic, ChevronRight, Check } from 'lucide-reac
 import ReactFlow, { Background, Controls, Node, Edge } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { useInView } from 'react-intersection-observer'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ThemeProvider, ThemeToggle, useTheme } from './ThemeProvider'
 import {
   Accordion,
@@ -139,70 +138,13 @@ function LandingPageContent() {
   const [isSubmitted, setIsSubmitted] = useState(false)
   const controls = useAnimation()
   const [_, inView] = useInView()
-  const [activeTab, setActiveTab] = useState('mindmap')
   const navigate = useNavigate()
   const { theme } = useTheme()
 
   const [nodes] = useState(initialNodes)
   const [edges] = useState(initialEdges)
-  // const [isLoading, setIsLoading] = useState(false)
-  // const { userEmail } = useUserInfo();
-
-  // useEffect(() => {
-  //   if (userEmail) {
-  //     preFetchMindmaps();
-  //   }
-  // }, [userEmail]);
 
   const [starCount, setStarCount] = useState(25)
-
-  // const preFetchMindmaps = async () => {
-  //   if (!userEmail) return;
-
-  //   try {
-  //     setIsLoading(true);
-  //     const response = await fetch(`https://ideavine.onrender.com/users/lookup`, {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({ email: userEmail }),
-  //     });
-
-  //     if (!response.ok) {
-  //       throw new Error("Failed to fetch user UID");
-  //     }
-
-  //     const data = await response.json();
-  //     const userUid = data.user._id;
-
-  //     const mindmapsResponse = await fetch(
-  //       `https://ideavine.onrender.com/users/${userUid}/mindmaps`,
-  //       {
-  //         method: "GET",
-  //         headers: {
-  //           "Content-Type": "application/json",
-  //         },
-  //       }
-  //     );
-
-  //     if (!mindmapsResponse.ok) {
-  //       throw new Error("Failed to fetch mindmaps");
-  //     }
-
-  //     const mindmapsData = await mindmapsResponse.json();
-  //     const sortedMindmaps = mindmapsData.mindmaps.sort(
-  //       (a: { updated_at: string | number | Date }, b: { updated_at: string | number | Date }) => 
-  //         new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-  //     );
-
-  //     setMindmaps(sortedMindmaps);
-  //   } catch (err: any) {
-  //     console.error("Error pre-fetching mindmaps:", err);
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
 
   const openMindmaps = () => {
     navigate(`/mindmap`);
@@ -248,6 +190,89 @@ function LandingPageContent() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  const DemoSection = () => {
+    const [activeTab, setActiveTab] = useState(0);
+    const scrollRef = useRef(null);
+    const options = [
+      { 
+        title: "Speak your thoughts, let IdeaVine capture them",
+        description: "Voice-enabled Mindmapping. Ramble on, spitballing all your ideas off the top of your head. IdeaVine supports 99+ languages.",
+        video: "/mindmap-demo.mp4"
+      },
+      {
+        title: "Upload PDFs, Videos, and more",
+        description: "Import content from various sources. IdeaVine analyzes PDFs, videos, images, and documents, transforming them into structured mind maps.",
+        video: "/suggest-demo.mp4"
+      },
+      {
+        title: "Share your mindmaps and collborate",
+        description: "Work together in real-time, just like in Figma or Google Docs. Share your mind maps with teammates, get feedback, and collaborate on ideas.",
+        video: "/record-demo.mp4"
+      }
+    ];
+  
+    return (
+      <Element name="demo" ref={scrollRef}>
+        <section className="py-16 sm:py-24 bg-background">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-12">
+              <div className="space-y-8">
+                <div>
+                  <h2 className="text-4xl font-bold mb-4">Think visually. Think brilliantly.</h2>
+                  <p className="text-lg text-muted-foreground">
+                    Automated collaborative multi-modal mindmapping — freeing you to focus on your ideas.
+                  </p>
+                </div>
+                <div className="space-y-4">
+                  {options.map((option, index) => (
+                    <motion.div
+                      key={index}
+                      className={`p-6 rounded-lg cursor-pointer ${
+                        activeTab === index ? 'bg-primary/10 border border-primary/20' : 'hover:bg-muted'
+                      }`}
+                      initial={false}
+                      animate={{
+                        scale: activeTab === index ? 1.02 : 1,
+                      }}
+                      transition={{ duration: 0.2 }}
+                      onClick={() => setActiveTab(index)}
+                    >
+                      <h3 className="text-xl font-semibold mb-2">{option.title}</h3>
+                      <p className="text-muted-foreground">{option.description}</p>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+              <div className="relative h-[400px] bg-muted rounded-lg overflow-hidden mt-20">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeTab}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                    className="absolute inset-0"
+                  >
+                    <video
+                      className="w-full h-full object-cover"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      key={options[activeTab].video}
+                    >
+                      <source src={options[activeTab].video} type="video/mp4" />
+                    </video>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </div>
+          </div>
+        </section>
+      </Element>
+    );
+  };
   
 
   return (
@@ -431,86 +456,7 @@ function LandingPageContent() {
       </Element>
 
       {/* Demo Section */}
-      <Element name="demo">
-        <section className="py-16 sm:py-24 bg-muted/50">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-2xl text-center mb-12">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">See IdeaVine in Action</h2>
-              <p className="mt-4 text-lg text-muted-foreground">
-                Experience the power and simplicity of IdeaVine with our interactive demo videos.
-              </p>
-            </div>
-            <Tabs defaultValue="mindmap" className="w-full" onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-3 mb-8 bg-secondary">
-                <TabsTrigger value="mindmap" className="bg-secondary">Mind Mapping</TabsTrigger>
-                <TabsTrigger value="voice" className="bg-secondary">Voice Recording</TabsTrigger>
-                <TabsTrigger value="suggestions" className="bg-secondary">AI Suggestions</TabsTrigger>
-              </TabsList>
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeTab}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3  }}
-                >
-                  <TabsContent value="mindmap" className="bg-card rounded-lg shadow-lg p-6">
-                    <h3 className="text-xl font-semibold mb-4">Create Your Mind Map</h3>
-                    <p className="mb-4">Watch how easy it is to create and organize your ideas with IdeaVine's intuitive interface.</p>
-                    <div className="aspect-video rounded-lg overflow-hidden">
-                      <video
-                        className="w-full h-full object-cover"
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        poster="/placeholder.svg?height=720&width=1280"
-                      >
-                        <source src="/mindmap-demo.mp4" type="video/mp4" />
-                        Your browser does not support the video tag.
-                      </video>
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="suggestions" className="bg-card rounded-lg shadow-lg p-6">
-                    <h3 className="text-xl font-semibold mb-4">AI-Powered Suggestions</h3>
-                    <p className="mb-4">See how our AI analyzes your mind map and provides relevant suggestions to expand your ideas.</p>
-                    <div className="aspect-video rounded-lg overflow-hidden">
-                      <video
-                        className="w-full h-full object-cover"
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        poster="/placeholder.svg?height=720&width=1280"
-                      >
-                        <source src="/suggest-demo.mp4" type="video/mp4" />
-                        Your browser does not support the video tag.
-                      </video>
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="voice" className="bg-card rounded-lg shadow-lg p-6">
-                    <h3 className="text-xl font-semibold mb-4">Voice Recording</h3>
-                    <p className="mb-4">Learn how to capture your ideas on the go with our voice recording feature (It's a long video, please be patient!).</p>
-                    <div className="aspect-video rounded-lg overflow-hidden">
-                      <video
-                        className="w-full h-full object-cover"
-                        autoPlay
-                        loop
-                        muted
-                        playsInline
-                        poster="/placeholder.svg?height=720&width=1280"
-                      >
-                        <source src="/record-demo.mp4" type="video/mp4" />
-                        Your browser does not support the video tag.
-                      </video>
-                    </div>
-                  </TabsContent>
-                </motion.div>
-              </AnimatePresence>
-            </Tabs>
-          </div>
-        </section>
-      </Element>
+      <DemoSection />
 
       {/* Testimonials Section */}
       <Element name="testimonials">

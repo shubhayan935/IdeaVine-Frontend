@@ -123,10 +123,9 @@ export function AppSidebar() {
       mindmap_id: newMindmapId,
       user_email: userEmail,
       title: "Untitled Mindmap",
-      description: "",
-      tags: [],
-      nodes: [],
     }
+
+    console.log(requestBody);
 
     try {
       setLoading(true)
