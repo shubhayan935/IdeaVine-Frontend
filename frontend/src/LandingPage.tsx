@@ -43,12 +43,12 @@ const initialEdges: Edge[] = [
   { id: 'e3-7', source: '3', target: '7' },
 ]
 
-const features = [
-  { icon: Brain, title: 'Intuitive Mind Mapping', description: 'Create and organize your ideas visually with our easy-to-use interface.' },
-  { icon: Mic, title: 'Voice Recording', description: 'Capture your thoughts on the go with built-in voice recording functionality.' },
-  { icon: Zap, title: 'AI-Powered Suggestions', description: 'Get intelligent suggestions to expand your mind maps and spark creativity.' },
-  { icon: PenTool, title: 'Essay Writing Made Easy', description: 'Craft detailed essays and develop your ideas effortlessly with our versatile write feature.' },
-]
+// const features = [
+//   { icon: Brain, title: 'Intuitive Mind Mapping', description: 'Create and organize your ideas visually with our easy-to-use interface.' },
+//   { icon: Mic, title: 'Voice Recording', description: 'Capture your thoughts on the go with built-in voice recording functionality.' },
+//   { icon: Zap, title: 'AI-Powered Suggestions', description: 'Get intelligent suggestions to expand your mind maps and spark creativity.' },
+//   { icon: PenTool, title: 'Essay Writing Made Easy', description: 'Craft detailed essays and develop your ideas effortlessly with our versatile write feature.' },
+// ]
 
 const testimonials = [
   {
@@ -274,6 +274,144 @@ function LandingPageContent() {
     );
   };
   
+  const CompanyCarousel = () => {
+    const companies = [
+      "University of Southern California",
+      "UC Berkeley",
+      "UCLA",
+      "Microsoft",
+      "Amazon",
+      "Qualcomm",
+    ];
+  
+    // Duplicate the array to create seamless loop
+    const duplicatedCompanies = [...companies, ...companies, ...companies];
+  
+    return (
+      <div className="w-full py-8 bg-transparent backdrop-blur-xl">
+        <div className="container mx-auto">
+          <p className="text-center text-md text-muted-foreground mb-10">
+            USED BY PEOPLE AT
+          </p>
+          <div className="relative overflow-hidden">
+            {/* Left Gradient */}
+            <div className="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-background to-transparent z-10" />
+            
+            <motion.div
+              className="flex whitespace-nowrap gap-8"
+              animate={{
+                x: ["0%", "-50%"]
+              }}
+              transition={{
+                x: {
+                  duration: 10,
+                  repeat: Infinity,
+                  ease: "linear"
+                }
+              }}
+            >
+              {duplicatedCompanies.map((company, index) => (
+                <span
+                  key={`${company}-${index}`}
+                  className="inline-block text-lg font-medium px-4"
+                >
+                  {company}
+                </span>
+              ))}
+            </motion.div>
+            
+            {/* Right Gradient */}
+            <div className="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-background to-transparent z-10" />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const PricingSection = () => {
+    const plans = [
+      {
+        name: "Starter",
+        description: "For individuals just getting started—no credit card needed",
+        price: "Free",
+        features: [
+          "Unlimited mindmaps",
+          "Voice recording to mindmap nodes",
+          "Share mindmaps with other IdeaVine users",
+          "AI-powered suggestions",
+        ],
+        included: true,
+        buttonText: "Get Started",
+        buttonVariant: "outline" as const,
+      },
+      {
+        name: "Plus",
+        description: "Unlock the full capabilities of IdeaVine",
+        price: "$10",
+        features: [
+          "Unlimited mindmaps",
+          "Voice recording to mindmap nodes",
+          "Share mindmaps with other IdeaVine users",
+          "AI-powered suggestions",
+          "Upload files (PDFs, videos, images and more) up to 100MB",
+        ],
+        included: false,
+        buttonText: "Get Started",
+        buttonVariant: "default" as const,
+      }
+    ];
+  
+    return (
+      <Element name="pricing">
+        <section className="py-16 sm:py-24">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-2xl text-center mb-12">
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Pricing</h2>
+            </div>
+            
+            <div className="mx-auto max-w-5xl grid gap-8 sm:grid-cols-2">
+              {plans.map((plan) => (
+                <div 
+                  key={plan.name}
+                  className="relative rounded-2xl bg-card p-8 shadow-sm ring-1 ring-muted hover:ring-primary transition-all duration-200 flex flex-col"
+                >
+                  {/* Card Content */}
+                  <div className="flex-grow">
+                    <h3 className="text-2xl font-semibold leading-7">{plan.name}</h3>
+                    <p className="mt-4 text-sm leading-6 text-muted-foreground">{plan.description}</p>
+                    <p className="mt-6 flex items-baseline gap-x-1">
+                      <span className="text-4xl font-bold">{plan.price}</span>
+                      {plan.price !== "Free" && <span className="text-sm font-semibold leading-6">/month</span>}
+                    </p>
+                    
+                    <ul role="list" className="mt-8 space-y-3 text-sm leading-6">
+                      {plan.features.map((feature) => (
+                        <li key={feature} className="flex gap-x-3">
+                          <Check className={`h-6 w-5 flex-none ${plan.included ? 'text-muted-foreground' : 'text-emerald-500'}`} />
+                          {feature}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+  
+                  {/* Button Section - Always at bottom */}
+                  <div className="mt-8">
+                    <Button
+                      variant={plan.buttonVariant}
+                      size="lg"
+                      className="w-full rounded-full"
+                    >
+                      {plan.buttonText}
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </Element>
+    );
+  };
 
   return (
     <div className={`min-h-screen bg-background text-foreground transition-colors duration-300 ${theme === 'dark' ? 'dark' : ''}`}>
@@ -308,14 +446,14 @@ function LandingPageContent() {
             </div>
             <div className="hidden md:block">
               <div className="ml-10 flex items-baseline space-x-4">
-                <ScrollLink
+                {/* <ScrollLink
                   to="features"
                   smooth={true}
                   duration={500}
                   className="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium cursor-pointer"
                 >
                   Features
-                </ScrollLink>
+                </ScrollLink> */}
                 <ScrollLink
                   to="demo"
                   smooth={true}
@@ -331,6 +469,14 @@ function LandingPageContent() {
                   className="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium cursor-pointer"
                 >
                   Testimonials
+                </ScrollLink>
+                <ScrollLink
+                  to="pricing"
+                  smooth={true}
+                  duration={500}
+                  className="text-muted-foreground hover:text-foreground px-3 py-2 rounded-md text-sm font-medium cursor-pointer"
+                >
+                  Pricing
                 </ScrollLink>
                 <ScrollLink
                   to="faq"
@@ -383,7 +529,7 @@ function LandingPageContent() {
                 Transform your thoughts into visual masterpieces. IdeaVine helps you capture, organize, and expand your ideas like never before.
               </p>
               <div className="mt-10 flex items-center justify-center gap-x-6">
-              <SignedIn>
+                <SignedIn>
                   <Button 
                     size="lg" 
                     className={cn("rounded-full", "select-none")}
@@ -424,8 +570,10 @@ function LandingPageContent() {
         </div>
       </section>
 
+      <CompanyCarousel />
+
       {/* Features Section */}
-      <Element name="features">
+      {/* <Element name="features">
         <section className="py-16 sm:py-24">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-2xl text-center">
@@ -453,7 +601,7 @@ function LandingPageContent() {
             </div>
           </div>
         </section>
-      </Element>
+      </Element> */}
 
       {/* Demo Section */}
       <DemoSection />
@@ -494,6 +642,9 @@ function LandingPageContent() {
           </div>
         </section>
       </Element>
+
+      {/* Pricing Section */}
+      <PricingSection />
 
       {/* FAQ Section */}
       <Element name="faq">

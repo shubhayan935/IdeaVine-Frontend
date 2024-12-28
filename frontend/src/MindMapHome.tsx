@@ -14,6 +14,14 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { AppSidebar } from './Sidebar'
 import { SidebarProvider } from './components/ui/sidebar'
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogFooter, 
+  DialogHeader, 
+  DialogTitle 
+} from "@/components/ui/dialog"
 
 interface Mindmap {
   _id: string
@@ -28,6 +36,8 @@ export default function IdeaVineIntegratedDashboard() {
   const { userEmail, firstName, lastName } = useUserInfo()
   const navigate = useNavigate()
   const { signOut } = useClerk()
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [mindmapToDelete, setMindmapToDelete] = useState<Mindmap | null>(null);
 
   useEffect(() => {
     if (userEmail) {
@@ -65,20 +75,30 @@ export default function IdeaVineIntegratedDashboard() {
     }
   }
 
-  const handleDeleteMindmap = async (mindmapId: string) => {
+  const handleDeleteClick = (e: React.MouseEvent, mindmap: Mindmap) => {
+    e.stopPropagation();
+    setMindmapToDelete(mindmap);
+    setDeleteDialogOpen(true);
+  };
+  
+  const confirmDelete = async () => {
+    if (!mindmapToDelete) return;
+    
     try {
-      const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmapId}`, {
+      const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmapToDelete._id}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-      })
-
-      if (!response.ok) throw new Error("Failed to delete mindmap")
-
-      setMindmaps(prevMindmaps => prevMindmaps.filter(m => m._id !== mindmapId))
+      });
+  
+      if (!response.ok) throw new Error("Failed to delete mindmap");
+  
+      setMindmaps(prevMindmaps => prevMindmaps.filter(m => m._id !== mindmapToDelete._id));
+      setDeleteDialogOpen(false);
+      setMindmapToDelete(null);
     } catch (err) {
-      console.error("Error deleting mindmap:", err)
+      console.error("Error deleting mindmap:", err);
     }
-  }
+  };
 
   const handleLogout = async () => {
     await signOut()
@@ -206,17 +226,14 @@ export default function IdeaVineIntegratedDashboard() {
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              className="text-muted-foreground hover:text-foreground"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteMindmap(mindmap._id);
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-muted-foreground hover:text-foreground"
+                            onClick={(e) => handleDeleteClick(e, mindmap)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>Delete mindmap</p>
@@ -231,6 +248,30 @@ export default function IdeaVineIntegratedDashboard() {
           </main>
         </div>
       </div>
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className='mb-5'>Delete "{mindmapToDelete?.title}"</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete "{mindmapToDelete?.title}"? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SidebarProvider>
   )
 }

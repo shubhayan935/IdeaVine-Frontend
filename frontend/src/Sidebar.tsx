@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, createContext } from 'react'
-import { Plus, Leaf, Palette ,Users, Home, User2 } from 'lucide-react'
+import { Plus, Leaf ,Users, Home, User2 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
@@ -11,16 +11,9 @@ import {
   SidebarGroup,
   SidebarHeader,
 } from "@/components/ui/sidebar"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { useNavigate } from 'react-router-dom'
 import { useUserInfo } from './context/UserContext'
+import { ThemeToggle, ThemeProvider } from './ThemeProvider'
 
 interface Mindmap {
   _id: string
@@ -38,7 +31,7 @@ interface Mindmap {
   shared_with?: string[]
 }
 
-type Theme = "light" | "dark" | "beige" | "lavender"
+type Theme = "light" | "dark"
 
 interface ThemeOption {
   name: Theme
@@ -50,8 +43,6 @@ interface ThemeOption {
 const themeOptions: ThemeOption[] = [
   { name: "light", primaryColor: "#ffffff", secondaryColor: "#000000", label: "Light" },
   { name: "dark", primaryColor: "#1a1a1a", secondaryColor: "#ffffff", label: "Dark" },
-  { name: "beige", primaryColor: "#f5f5dc", secondaryColor: "#8b4513", label: "Beige" },
-  { name: "lavender", primaryColor: "#e6e6fa", secondaryColor: "#000000", label: "Lavender" },
 ]
 
 export const SidebarUpdateContext = createContext<{
@@ -67,7 +58,7 @@ export const SidebarUpdateContext = createContext<{
 export function AppSidebar() {
   const [___, setActiveItem] = useState<string | null>(null)
   const [____, _] = useState("")
-  const [theme, setTheme] = useState<Theme>("light")
+  const [theme, setTheme] = useState<Theme>("dark")
   const [______, setMindmaps] = useState<Mindmap[]>([])
   const [loading, setLoading] = useState<boolean>(false)
   const [__, setError] = useState<string | null>(null)
@@ -118,18 +109,24 @@ export function AppSidebar() {
   const handleCreateMindmap = async () => {
     if (!userEmail) return
 
-    const newMindmapId = `${Date.now()}`
+    const newMindmapId = `mindmap_${Date.now()}`;
+  
     const requestBody = {
-      mindmap_id: newMindmapId,
-      user_email: userEmail,
-      title: "Untitled Mindmap",
-    }
+      "mindmap_id": newMindmapId,
+      "user_email": userEmail,
+      "title": "Untitled Mind Map",
+      "description": "",
+      "tags": [],
+      "nodes": []
+    };
 
     console.log(requestBody);
 
     try {
       setLoading(true)
       setError(null)
+
+      console.log(requestBody);
 
       const response = await fetch("https://ideavine.onrender.com/mindmaps", {
         method: "POST",
@@ -246,134 +243,100 @@ export function AppSidebar() {
   ]
 
   return (
-    <SidebarUpdateContext.Provider value={{ updateSidebarTitle, activeFilter, setActiveFilter }}>
-      <Sidebar className="border-r border-border/50 shadow-sm transition-colors duration-300">
-        <SidebarHeader>
-          <div className="flex items-center justify-between gap-2 px-5 py-4">
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary shadow-sm">
-                <Leaf className="h-4 w-4 text-primary-foreground" />
+    <ThemeProvider>
+      <SidebarUpdateContext.Provider value={{ updateSidebarTitle, activeFilter, setActiveFilter }}>
+        <Sidebar className="border-r border-border/50 shadow-sm transition-colors duration-300">
+          <SidebarHeader>
+            <div className="flex items-center justify-between gap-2 px-5 py-4">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary shadow-sm">
+                  <Leaf className="h-4 w-4 text-primary-foreground" />
+                </div>
+                <span className="font-semibold text-xl tracking-tight">IdeaVine</span>
               </div>
-              <span className="font-semibold text-xl tracking-tight">IdeaVine</span>
+              <ThemeToggle />
             </div>
+          </SidebarHeader>
+
+          <SidebarContent>
+            <ScrollArea className="h-[calc(100vh-8rem)] py-6">
+              <div className="space-y-6">
+                <div className="px-4">
+                  <Button
+                    className="w-full justify-center gap-2 shadow-sm hover:shadow"
+                    size="lg"
+                    onClick={handleCreateMindmap}
+                    disabled={loading}
+                  >
+                    <Plus className="h-4 w-4" />
+                    {loading ? "Loading..." : "New Mind Map"}
+                  </Button>
+                </div>
+
+                <SidebarGroup>
+                  {/* <SidebarGroupLabel className="px-4 text-md font-medium text-foreground/70">
+                    Filters
+                  </SidebarGroupLabel> */}
+                  <nav className="space-y-4 p-2">
+                    {menuItems.map((item) => {
+                      const Icon = item.icon
+                      return (
+                        <Button
+                          key={item.id}
+                          variant="ghost"
+                          className={cn(
+                            "w-full justify-start text-base font-normal h-10 rounded-full",
+                            activeFilter === item.id
+                              ? "bg-slate-200 dark:bg-slate-800 font-medium"
+                              : "bg-transparent hover:bg-slate-200 dark:hover:bg-slate-600"
+                          )}
+                          onClick={() => setActiveFilter(item.id)}
+                        >
+                          <Icon className="h-5 w-5 mr-3" />
+                          {item.label}
+                        </Button>
+                      )
+                    })}
+                  </nav>
+                </SidebarGroup>
+              </div>
+            </ScrollArea>
+          </SidebarContent>
+
+          {/* <SidebarFooter className="border-t border-border/50 p-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 rounded-lg bg-secondary hover:bg-secondary/80"
+                  className="w-full justify-start gap-3 bg-background hover:bg-muted px-4 py-3 h-auto shadow-sm"
                 >
-                  <Palette className="h-4 w-4" />
-                  <span className="sr-only">Select theme</span>
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>{getUserInitials()}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col items-start">
+                    <span className="text-sm font-medium">
+                      {firstName ? `${firstName} ${lastName || ""}` : userEmail}
+                    </span>
+                    <span className="text-xs text-muted-foreground">{userEmail}</span>
+                  </div>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" side="right" sideOffset={22} className="w-56 shadow-lg">
-                <DropdownMenuLabel className="text-sm font-medium">Choose theme</DropdownMenuLabel>
+
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {themeOptions.map((option) => (
-                  <DropdownMenuItem
-                    key={option.name}
-                    onClick={() => setTheme(option.name)}
-                    className="cursor-pointer"
-                  >
-                    <div className="flex items-center w-full gap-3">
-                      <div className="flex items-center justify-center">
-                        <div
-                          className="w-5 h-5 rounded-l-md border-r border-border/50 shadow-sm"
-                          style={{ backgroundColor: option.primaryColor }}
-                        />
-                        <div
-                          className="w-5 h-5 rounded-r-md shadow-sm"
-                          style={{ backgroundColor: option.secondaryColor }}
-                        />
-                      </div>
-                      <span className="text-sm font-medium">{option.label}</span>
-                    </div>
-                  </DropdownMenuItem>
-                ))}
+                <DropdownMenuItem
+                  className="text-destructive cursor-pointer flex items-center"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Log out
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
-        </SidebarHeader>
-
-        <SidebarContent>
-          <ScrollArea className="h-[calc(100vh-8rem)] py-6">
-            <div className="space-y-6">
-              <div className="px-4">
-                <Button
-                  className="w-full justify-center gap-2 shadow-sm hover:shadow"
-                  size="lg"
-                  onClick={handleCreateMindmap}
-                  disabled={loading}
-                >
-                  <Plus className="h-4 w-4" />
-                  {loading ? "Loading..." : "New Mind Map"}
-                </Button>
-              </div>
-
-              <SidebarGroup>
-                {/* <SidebarGroupLabel className="px-4 text-md font-medium text-foreground/70">
-                  Filters
-                </SidebarGroupLabel> */}
-                <nav className="space-y-4 p-2">
-                  {menuItems.map((item) => {
-                    const Icon = item.icon
-                    return (
-                      <Button
-                        key={item.id}
-                        variant="ghost"
-                        className={cn(
-                          "w-full justify-start text-base font-normal h-10 rounded-full",
-                          activeFilter === item.id
-                            ? "bg-slate-200 dark:bg-slate-800 font-medium"
-                            : "bg-transparent hover:bg-slate-200 dark:hover:bg-slate-600"
-                        )}
-                        onClick={() => setActiveFilter(item.id)}
-                      >
-                        <Icon className="h-5 w-5 mr-3" />
-                        {item.label}
-                      </Button>
-                    )
-                  })}
-                </nav>
-              </SidebarGroup>
-            </div>
-          </ScrollArea>
-        </SidebarContent>
-
-        {/* <SidebarFooter className="border-t border-border/50 p-4">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="w-full justify-start gap-3 bg-background hover:bg-muted px-4 py-3 h-auto shadow-sm"
-              >
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback>{getUserInitials()}</AvatarFallback>
-                </Avatar>
-                <div className="flex flex-col items-start">
-                  <span className="text-sm font-medium">
-                    {firstName ? `${firstName} ${lastName || ""}` : userEmail}
-                  </span>
-                  <span className="text-xs text-muted-foreground">{userEmail}</span>
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-destructive cursor-pointer flex items-center"
-                onClick={handleLogout}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Log out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </SidebarFooter> */}
-      </Sidebar>
-    </SidebarUpdateContext.Provider>
+          </SidebarFooter> */}
+        </Sidebar>
+      </SidebarUpdateContext.Provider>
+    </ThemeProvider>
   )
 }

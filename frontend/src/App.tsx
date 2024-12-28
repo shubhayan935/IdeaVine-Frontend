@@ -6,6 +6,7 @@ import AuthPage from "./AuthPage";
 import MindMap from "./MindMap";
 import { useUserInfo } from "./context/UserContext";
 import MindMapHome from "./MindMapHome";
+import { AccessDenied } from "./AccessDenied";
 import { SidebarUpdateProvider } from "./context/SidebarUpdateContext"; // Import SidebarUpdateProvider
 
 
@@ -24,6 +25,7 @@ export default function App() {
               }
             />
             {/* Protected Routes */}
+            <Route path="/mindmap/access-denied" element={<AccessDenied />} />
             <Route
               path="/mindmap/:mindmap_id"
               element={
