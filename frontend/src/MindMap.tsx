@@ -39,14 +39,13 @@ import {
   Menu,
   Leaf,
   LogOut,
-  // Settings,
-  // Upload,
-  // FileUp,
+  Upload,
+  FileUp,
   FileText, 
   Video, 
-  // Music, 
+  Music, 
   Image,
-  // File,
+  File,
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -56,12 +55,12 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-// import { Dialog, DialogHeader, DialogContent, DialogTitle, DialogDescription, } from "@/components/ui/dialog";
+import { Dialog, DialogHeader, DialogContent, DialogTitle, DialogDescription, } from "@/components/ui/dialog";
 import { SidebarUpdateContext } from "./Sidebar";
 import { v4 as uuidv4 } from "uuid";
 import { useMediaQuery } from "react-responsive";
 import { useUserInfo } from "./context/UserContext";
-// import { ShareDialog } from "./ShareDialog"
+import { ShareDialog } from "./ShareDialog"
 import { useParams, useNavigate } from "react-router-dom";
 import { deriveEdgesFromNodes } from "./utils/deriveEdges";
 import {
@@ -94,6 +93,11 @@ const SourceIndicator: React.FC<{ type: string; source: string }> = ({ source })
       Icon = Mic;
       bgColor = 'bg-blue-200';
       tooltipContent = 'Node created from a voice recording';
+      break;
+    case 'uploaded_audio':
+      Icon = Mic;
+      bgColor = 'bg-orange-200';
+      tooltipContent = 'Node created from uploaded audio';
       break;
     case 'pdf_extraction':
       Icon = FileText;
@@ -372,42 +376,69 @@ function MindMapContent() {
   const isMobile = useMediaQuery({ maxWidth: 768 });
   // const isTablet = useMediaQuery({ minWidth: 769, maxWidth: 1024 });
 
-  // const [isPublic, setIsPublic] = useState(false)
+  const [isPublic, setIsPublic] = useState(false)
 
   // const { theme, setTheme } = useTheme();
   const { signOut } = useClerk()
 
-  // const [uploadType, setUploadType] = useState<"PDF" | "Video" | "Audio" | "Image" | "Document" | null>(null)
-  // const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
+  const [uploadType, setUploadType] = useState<"PDF" | "Video" | "Audio" | "Image" | "Document" | null>(null)
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
 
-  // const handleUpload = (type: "PDF" | "Video" | "Audio" | "Image" | "Document") => {
-  //   setUploadType(type)
-  //   setIsUploadDialogOpen(true)
-  // }
+  const handleUpload = (type: "PDF" | "Video" | "Audio" | "Image" | "Document") => {
+    setUploadType(type)
+    setIsUploadDialogOpen(true)
+  }
 
-  // const handleFileUpload = (files: FileList | null) => {
-  //   if (files && files.length > 0) {
-  //     const file = files[0]
-  //     const fileSizeLimit = {
-  //       PDF: 100 * 1024 * 1024, // 100MB
-  //       Video: 100 * 1024 * 1024, // 100MB
-  //       Audio: 50 * 1024 * 1024, // 50MB
-  //       Image: 20 * 1024 * 1024, // 20MB
-  //       Document: 100 * 1024 * 1024 // 100MB
-  //     }[uploadType!]
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
+    let fileSizeLimit;
+    
+    switch (uploadType) {
+      case "PDF":
+      case "Video":
+      case "Document":
+        fileSizeLimit = 100 * 1024 * 1024; // 100MB
+        break;
+      case "Audio":
+        fileSizeLimit = 50 * 1024 * 1024; // 50MB
+        break;
+      case "Image":
+        fileSizeLimit = 20 * 1024 * 1024; // 20MB
+        break;
+      default:
+        return;
+    }
+  
+    if (file.size > fileSizeLimit) {
+      alert(`File size exceeds the limit of ${fileSizeLimit / (1024 * 1024)}MB`);
+      return;
+    }
 
-  //     if (file.size > fileSizeLimit) {
-  //       alert(`File size exceeds the limit of ${fileSizeLimit / (1024 * 1024)}MB`)
-  //       return
-  //     }
-
-  //     // Here you would handle the file upload to your backend
-  //     console.log(`Uploading ${uploadType} file:`, file.name)
-      
-  //     // Close the dialog after upload
-  //     setIsUploadDialogOpen(false)
-  //   }
-  // }
+    try {
+      switch (uploadType) {
+        case "Image":
+          await handleImageUpload(files);
+          break;
+        case "Audio":
+          const audioBlob = new Blob([file], { type: file.type });
+          await handleAudioUpload(audioBlob, "audio_extraction", "uploaded_audio");
+          setIsUploadDialogOpen(false);
+          break;
+        case "PDF":
+          await handlePdfUpload(files);
+          break;
+        default:
+          console.log(`${uploadType} upload not yet implemented`);
+      }
+    } catch (error) {
+      console.error(`Error uploading ${uploadType}:`, error);
+      alert(`Failed to upload ${uploadType}. Please try again.`);
+    } finally {
+      setIsUploadDialogOpen(false);
+    }
+  };
 
   // Utility functions to manage node operations
   // const addNodeToAddList = (node: any) => {
@@ -441,8 +472,15 @@ function MindMapContent() {
               'Content-Type': 'application/json',
               // Include authentication headers if required by backend
               // 'Authorization': `Bearer ${token}`
+              'X-User-Email': userEmail || '',
             },
           });
+
+          if (response.status === 403) {
+            // Access denied
+            navigate('/mindmap/access-denied');
+            return;
+          }
 
           if (!response.ok) {
             const errorData = await response.json();
@@ -1094,7 +1132,7 @@ function MindMapContent() {
         const audioBlob = new Blob(audioChunksRef.current, {
           type: "audio/webm",
         });
-        await handleAudioUpload(audioBlob);
+        await handleAudioUpload(audioBlob, "audio_generated", "audio_transcription");
       };
 
       mediaRecorderRef.current.start();
@@ -1119,7 +1157,7 @@ function MindMapContent() {
   };
 
   // Handle audio upload to backend
-  const handleAudioUpload = async (audioBlob: Blob) => {
+  const handleAudioUpload = async (audioBlob: Blob, nodeType: string, nodeSource: string) => {
     const formData = new FormData();
 
     formData.append("audio_file", audioBlob, "recording.webm");
@@ -1138,7 +1176,7 @@ function MindMapContent() {
       const data = await response.json();
       const nodesFromBackend = data.nodes;
 
-      const { newNodes, newEdges } = processBackendNodes(nodesFromBackend, "audio_generated", "audio_transcription");
+      const { newNodes, newEdges } = processBackendNodes(nodesFromBackend, nodeType, nodeSource);
 
       setNodes((nds) => [...nds, ...newNodes]);
       setEdges((eds) => [...eds, ...newEdges]);
@@ -1152,14 +1190,113 @@ function MindMapContent() {
     }
   };
 
-  // Process nodes received from backend after audio processing
+  const handlePdfUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
+    const fileSizeLimit = 100 * 1024 * 1024; // 100MB
+  
+    if (file.size > fileSizeLimit) {
+      alert(`File size exceeds the limit of 100MB`);
+      return;
+    }
+  
+    // Create FormData
+    const formData = new FormData();
+    formData.append('pdf_file', file);
+  
+    try {
+      const response = await fetch('https://ideavine.onrender.com/process_pdf', {
+        method: 'POST',
+        body: formData,
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to process PDF');
+      }
+  
+      const data = await response.json();
+      const nodesFromBackend = data.nodes;
+  
+      // Process the nodes and add them to the mind map
+      const { newNodes, newEdges } = processBackendNodes(
+        nodesFromBackend,
+        'pdf_generated',
+        'pdf_extraction'
+      );
+  
+      setNodes(nds => [...nds, ...newNodes]);
+      setEdges(eds => [...eds, ...newEdges]);
+      
+      // Auto layout after adding new nodes
+      setLayoutOnNextRender(true);
+      
+      // Close the upload dialog
+      setIsUploadDialogOpen(false);
+    } catch (error) {
+      console.error('Error processing PDF:', error);
+      alert('Failed to process PDF. Please try again.');
+    }
+  };
+
+  const handleImageUpload = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    
+    const file = files[0];
+    const fileSizeLimit = 20 * 1024 * 1024; // 20MB
+  
+    if (file.size > fileSizeLimit) {
+      alert(`File size exceeds the limit of 20MB`);
+      return;
+    }
+  
+    // Create FormData
+    const formData = new FormData();
+    formData.append('image_file', file);
+  
+    try {
+      const response = await fetch('https://ideavine.onrender.com/process_image', {
+        method: 'POST',
+        body: formData,
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to process image');
+      }
+  
+      const data = await response.json();
+      console.log(data);
+      const nodesFromBackend = data.nodes;
+  
+      // Process the nodes and add them to the mind map
+      const { newNodes, newEdges } = processBackendNodes(
+        nodesFromBackend,
+        'image_generated',
+        'image_analysis'
+      );
+  
+      setNodes(nds => [...nds, ...newNodes]);
+      setEdges(eds => [...eds, ...newEdges]);
+      
+      // Auto layout after adding new nodes
+      setLayoutOnNextRender(true);
+      
+      // Close the upload dialog
+      setIsUploadDialogOpen(false);
+    } catch (error) {
+      console.error('Error processing image:', error);
+      alert('Failed to process image. Please try again.');
+    }
+  };
+
+  // Process nodes received from backend after processing
   const processBackendNodes = useCallback(
     (backendNodes: any[], nodeType: string, nodeSource: string) => {
       const newNodes: Node<CustomNodeData>[] = [];
       const nodeMap = new Map<string, Node<CustomNodeData>>();
 
       // Generate a unique prefix to avoid ID conflicts
-      const uniquePrefix = `audio-${Date.now()}-`;
+      const uniquePrefix = `${nodeType}-${Date.now()}-`;
       const existingNodeIds = new Set(nodes.map((node) => node.id));
       const idMap = new Map<string, string>();
 
@@ -1257,6 +1394,31 @@ function MindMapContent() {
         }
       });
 
+      // Send new edges to backend
+      // derivedEdges.forEach(async (edge) => {
+      //   try {
+      //     const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap_id}/edges`, {
+      //       method: 'POST',
+      //       headers: {
+      //         'Content-Type': 'application/json',
+      //       },
+      //       body: JSON.stringify({
+      //         _id: edge.id,
+      //         mindmap_id: mindmap_id,
+      //         source: edge.source,
+      //         target: edge.target,
+      //         type: edge.type,
+      //       }),
+      //     });
+
+      //     if (!response.ok) {
+      //       throw new Error('Failed to add edge to the database.');
+      //     }
+      //   } catch (error: any) {
+      //     console.error("Error adding edge:", error);
+      //   }
+      // });
+
       return { newNodes, newEdges: derivedEdges };
     },
     [nodes, mindmap_id, userEmail]
@@ -1271,11 +1433,11 @@ function MindMapContent() {
   }, [layoutOnNextRender, onLayout]);
 
 
-  // const handleVisibilityChange = (newIsPublic: boolean) => {
-  //   setIsPublic(newIsPublic)
-  //   // Here you would typically update the backend with the new visibility status
-  //   console.log("Updating map visibility:", newIsPublic)
-  // }
+  const handleVisibilityChange = (newIsPublic: boolean) => {
+    setIsPublic(newIsPublic)
+    // Here you would typically update the backend with the new visibility status
+    console.log("Updating map visibility:", newIsPublic)
+  }
 
   const getUserInitials = () => {
     if (!userEmail) return "U"
@@ -1332,12 +1494,12 @@ function MindMapContent() {
               </Button>
             ) : (
               <div className="flex items-center space-x-4">
-                {/* <ShareDialog
+                <ShareDialog
                   title={mapTitle}
                   mindmapId={mindmap_id}
                   isPublic={isPublic}
                   onVisibilityChange={handleVisibilityChange}
-                /> */}
+                />
                 {/* <Button variant="ghost" size="icon" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
                   {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
                 </Button> */}
@@ -1419,7 +1581,7 @@ function MindMapContent() {
                         </>
                       )}
                     </Button>
-                    {/* <DropdownMenu>
+                    <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button>
                           <Upload className="mr-2 h-4 w-4" />
@@ -1448,7 +1610,7 @@ function MindMapContent() {
                         Document
                       </DropdownMenuItem>
                       </DropdownMenuContent>
-                    </DropdownMenu> */}
+                    </DropdownMenu>
                     <Button
                       onClick={handleSuggest}
                       disabled={selectedNodes.length === 0 || isSuggestLoading}
@@ -1586,7 +1748,7 @@ function MindMapContent() {
               </div>
             </div>
           </div>
-          {/* <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+          <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Upload {uploadType}</DialogTitle>
@@ -1607,7 +1769,7 @@ function MindMapContent() {
                 </label>
               </div>
             </DialogContent>
-          </Dialog> */}
+          </Dialog>
         </div>
       </SidebarProvider>
     </NodeOperationsProvider>

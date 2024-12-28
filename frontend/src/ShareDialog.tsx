@@ -35,9 +35,29 @@ export function ShareDialog({ title, mindmapId, isPublic, onVisibilityChange }: 
     })
   }
 
-  const handleVisibilityChange = (checked: boolean) => {
-    onVisibilityChange(checked)
-  }
+  const handleVisibilityChange = async (checked: boolean) => {
+    try {
+      const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmapId}/visibility`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          is_public: checked
+        }),
+      });
+  
+      if (!response.ok) {
+        throw new Error('Failed to update visibility');
+      }
+      // Call the parent component's handler
+      onVisibilityChange(checked);
+    } catch (error) {
+      console.error('Error updating visibility:', error);
+      // Optionally revert the switch if the update failed
+      onVisibilityChange(!checked);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
