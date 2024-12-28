@@ -24,7 +24,7 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -36,14 +36,9 @@ import {
   Lightbulb,
   PenTool,
   X,
-  Search,
   Menu,
   Leaf,
-  Share2,
-  Sun,
-  Moon,
   LogOut,
-  Settings,
   Upload,
   FileUp,
   FileText, 
@@ -51,12 +46,6 @@ import {
   Music, 
   Image,
   File,
-  HelpCircle,
-  Mail,
-  Lock,
-  ChevronDown,
-  Link2,
-  Globe,
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -349,13 +338,6 @@ const CustomNode = ({ id, data, isConnectable, selected }: CustomNodeProps) => {
 const nodeTypes = {
   customNode: CustomNode,
 };
-
-interface ShareDialogProps {
-  title: string
-  mindmapId: string
-  isPublic: boolean
-  onVisibilityChange: (isPublic: boolean) => void
-}
 
 // Main MindMapContent Component
 function MindMapContent() {

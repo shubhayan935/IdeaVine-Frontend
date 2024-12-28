@@ -8,7 +8,7 @@ import { Link as ScrollLink, Element } from 'react-scroll'
 import { Button } from "@/components/ui/button"
 import { SignedIn, SignedOut, UserButton } from '@clerk/clerk-react';
 import { Input } from "@/components/ui/input"
-import { Leaf, Brain, Zap, PenTool, Mic, ChevronRight, Check } from 'lucide-react'
+import { Leaf, ChevronRight, Check } from 'lucide-react'
 import ReactFlow, { Background, Controls, Node, Edge } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { useInView } from 'react-intersection-observer'
