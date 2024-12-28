@@ -45,7 +45,6 @@ import {
   Video, 
   Music, 
   Image,
-  File,
 } from "lucide-react";
 import { 
   DropdownMenu, 
@@ -1589,14 +1588,14 @@ function MindMapContent() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
-                      <DropdownMenuItem onSelect={() => handleUpload("PDF")}>
+                      {/* <DropdownMenuItem onSelect={() => handleUpload("PDF")}>
                         <FileText className="mr-2 h-4 w-4" />
                         PDF
                       </DropdownMenuItem>
                       <DropdownMenuItem onSelect={() => handleUpload("Video")}>
                         <Video className="mr-2 h-4 w-4" />
                         Video
-                      </DropdownMenuItem>
+                      </DropdownMenuItem> */}
                       <DropdownMenuItem onSelect={() => handleUpload("Audio")}>
                         <Music className="mr-2 h-4 w-4" />
                         Audio
@@ -1605,10 +1604,10 @@ function MindMapContent() {
                         <Image className="mr-2 h-4 w-4" />
                         Image
                       </DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => handleUpload("Document")}>
+                      {/* <DropdownMenuItem onSelect={() => handleUpload("Document")}>
                         <File className="mr-2 h-4 w-4" />
                         Document
-                      </DropdownMenuItem>
+                      </DropdownMenuItem> */}
                       </DropdownMenuContent>
                     </DropdownMenu>
                     <Button
