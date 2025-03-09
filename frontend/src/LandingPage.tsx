@@ -335,9 +335,8 @@ function LandingPageContent() {
         description: "For individuals just getting started—no credit card needed",
         price: "Free",
         features: [
-          "Unlimited mindmaps",
+          "Up to 10 mindmaps",
           "Voice recording to mindmap nodes",
-          "Share mindmaps with other IdeaVine users",
           "AI-powered suggestions",
         ],
         included: true,
@@ -351,8 +350,8 @@ function LandingPageContent() {
         features: [
           "Unlimited mindmaps",
           "Voice recording to mindmap nodes",
-          "Share mindmaps with other IdeaVine users",
           "AI-powered suggestions",
+          "Share mindmaps with other IdeaVine users",
           "Upload files (PDFs, videos, images and more) up to 100MB",
         ],
         included: false,
