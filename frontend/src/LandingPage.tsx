@@ -211,7 +211,7 @@ function LandingPageContent() {
         video: "/record-demo.mp4"
       }
     ];
-  
+
     return (
       <Element name="demo" ref={scrollRef}>
         <section className="py-16 sm:py-24 bg-background">

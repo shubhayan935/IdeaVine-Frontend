@@ -1274,7 +1274,7 @@ function MindMapContent() {
         'image_generated',
         'image_analysis'
       );
-  
+
       setNodes(nds => [...nds, ...newNodes]);
       setEdges(eds => [...eds, ...newEdges]);
       
