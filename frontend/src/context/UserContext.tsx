@@ -25,6 +25,18 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [lastName, setLastName] = useState<string | null>(null);
 
   useEffect(() => {
+    // Demo mode: use env-provided demo user
+    const DEMO_MODE = (import.meta.env.VITE_DEMO_MODE === 'true');
+    if (DEMO_MODE) {
+      const demoEmail = import.meta.env.VITE_DEMO_USER_EMAIL || 'demo@ideavine.test';
+      const demoFirst = import.meta.env.VITE_DEMO_USER_FIRST || 'Demo';
+      const demoLast = import.meta.env.VITE_DEMO_USER_LAST || 'User';
+      setUserEmail(demoEmail);
+      setFirstName(demoFirst);
+      setLastName(demoLast);
+      return;
+    }
+
     if (isLoaded && isSignedIn && user) {
       const email = user.primaryEmailAddress?.emailAddress || null;
       setUserEmail(email);
@@ -48,4 +60,3 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 // Custom hook to use the UserContext
 export const useUserInfo = () => useContext(UserContext);
-
