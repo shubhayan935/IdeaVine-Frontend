@@ -28,6 +28,7 @@ interface Mindmap {
   title: string
   updated_at: string
   preview_url?: string
+  is_favorite?: boolean
 }
 
 export default function IdeaVineIntegratedDashboard() {
@@ -66,9 +67,12 @@ export default function IdeaVineIntegratedDashboard() {
       if (!mindmapsResponse.ok) throw new Error("Failed to fetch mindmaps")
 
       const mindmapsData = await mindmapsResponse.json()
-      const sortedMindmaps = mindmapsData.mindmaps.sort((a: Mindmap, b: Mindmap) => 
-        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-      )
+      const sortedMindmaps = mindmapsData.mindmaps.sort((a: Mindmap, b: Mindmap) => {
+        const favA = a.is_favorite ? 1 : 0
+        const favB = b.is_favorite ? 1 : 0
+        if (favA !== favB) return favB - favA
+        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+      })
       setMindmaps(sortedMindmaps)
     } catch (err) {
       console.error("Error fetching mindmaps:", err)
@@ -108,6 +112,24 @@ export default function IdeaVineIntegratedDashboard() {
   const filteredMindmaps = mindmaps.filter(mindmap =>
     mindmap.title.toLowerCase().includes(searchTerm.toLowerCase())
   )
+
+  const toggleFavorite = async (e: React.MouseEvent, mindmap: Mindmap) => {
+    e.stopPropagation()
+    try {
+      const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap._id}/favorite`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_favorite: !mindmap.is_favorite })
+      })
+
+      if (!response.ok) throw new Error('Failed to toggle favorite')
+
+      // Optimistically update UI
+      setMindmaps(prev => prev.map(m => m._id === mindmap._id ? { ...m, is_favorite: !m.is_favorite } : m))
+    } catch (err) {
+      console.error('Error toggling favorite:', err)
+    }
+  }
 
   // const toggleTheme = () => {
   //   setTheme(theme === 'dark' ? 'light' : 'dark')
@@ -222,18 +244,30 @@ export default function IdeaVineIntegratedDashboard() {
                         Last updated: {new Date(mindmap.updated_at).toLocaleString()}
                       </p>
                     </CardContent>
-                    <CardFooter className="bg-muted/50 flex justify-end items-center p-2">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="text-muted-foreground hover:text-foreground"
-                            onClick={(e) => handleDeleteClick(e, mindmap)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                      <CardFooter className="bg-muted/50 flex justify-end items-center p-2">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className={`text-muted-foreground hover:text-foreground ${mindmap.is_favorite ? 'text-yellow-500' : ''}`}
+                                onClick={(e) => toggleFavorite(e, mindmap)}
+                                aria-label={mindmap.is_favorite ? 'Unfavorite' : 'Favorite'}
+                              >
+                                {/* using emoji fallback for star to avoid new icon imports */}
+                                {mindmap.is_favorite ? '★' : '☆'}
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="text-muted-foreground hover:text-foreground"
+                                onClick={(e) => handleDeleteClick(e, mindmap)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
                           </TooltipTrigger>
                           <TooltipContent>
                             <p>Delete mindmap</p>
