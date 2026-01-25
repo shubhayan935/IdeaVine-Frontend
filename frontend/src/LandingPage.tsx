@@ -522,7 +522,7 @@ function LandingPageContent() {
               transition={{ duration: 0.5 }}
             >
               <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">
-                Unleash Your Ideas with <span className="text-primary">IdeaVine</span>
+                Think at the Speed of Light
               </h1>
               <p className="mt-6 text-lg leading-8 text-muted-foreground">
                 Transform your thoughts into visual masterpieces. IdeaVine helps you capture, organize, and expand your ideas like never before.
