@@ -32,6 +32,7 @@ interface Mindmap {
 }
 
 export default function IdeaVineIntegratedDashboard() {
+  const API_BASE = import.meta.env.VITE_API_BASE || 'https://ideavine.onrender.com'
   const [mindmaps, setMindmaps] = useState<Mindmap[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const { userEmail, firstName, lastName } = useUserInfo()
@@ -48,7 +49,7 @@ export default function IdeaVineIntegratedDashboard() {
 
   const fetchMindmaps = async () => {
     try {
-      const response = await fetch(`https://ideavine.onrender.com/users/lookup`, {
+      const response = await fetch(`${API_BASE}/users/lookup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: userEmail }),
@@ -59,7 +60,7 @@ export default function IdeaVineIntegratedDashboard() {
       const data = await response.json()
       const userUid = data.user._id
 
-      const mindmapsResponse = await fetch(`https://ideavine.onrender.com/users/${userUid}/mindmaps`, {
+       const mindmapsResponse = await fetch(`${API_BASE}/users/${userUid}/mindmaps`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       })
@@ -89,7 +90,7 @@ export default function IdeaVineIntegratedDashboard() {
     if (!mindmapToDelete) return;
     
     try {
-      const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmapToDelete._id}`, {
+      const response = await fetch(`${API_BASE}/mindmaps/${mindmapToDelete._id}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
       });
@@ -116,7 +117,7 @@ export default function IdeaVineIntegratedDashboard() {
   const toggleFavorite = async (e: React.MouseEvent, mindmap: Mindmap) => {
     e.stopPropagation()
     try {
-      const response = await fetch(`https://ideavine.onrender.com/mindmaps/${mindmap._id}/favorite`, {
+      const response = await fetch(`${API_BASE}/mindmaps/${mindmap._id}/favorite`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_favorite: !mindmap.is_favorite })
